@@ -1,12 +1,18 @@
 # Project Progress
 
 ## Current Phase
-Phase: 6
-Title: Streak Calculation Engine
+Phase: 7
+Title: Background Sync Service
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 6: Streak Calculation Engine — COMPLETED 2026-04-12
+- [x] 6.1 Date+Extensions.swift: startOfDay(in:) and adding(days:in:) utility methods
+- [x] 6.2 StreakEngine.swift: StreakPeriod, StreakInfo types + StreakEngine struct with timezone-aware calculate() method (3 private helpers: uniqueLocalDays, calculateCurrentStreak, buildStreakPeriods)
+- [x] 6.3 StreakEngineTests.swift: 22 test cases (18 individual + 4 parameterized) covering empty input, basic streaks, grace period, deduplication, UTC→local timezone boundaries, streak history, future dates, unsorted input
+- Verification: 107 total tests pass (0 failures), build clean
+
 ### Phase 5: GitHub API Client — Endpoints (Edge-Case Hardening) — COMPLETED 2026-04-12
 - [x] 5.1–5.4 All endpoint methods verified as already implemented during Phase 4 (fetchContributions, fetchRepositories, fetchPullRequests, validateToken)
 - [x] 5.5 All original Phase 5 success criteria confirmed passing
@@ -45,16 +51,17 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 6.1 Implement StreakEngine with timezone-aware streak calculation (ARCHITECTURE.md §4.3)
-- [ ] 6.2 Implement StreakPeriod history builder
-- [ ] 6.3 Write comprehensive streak tests (minimum 10 test cases)
+- [ ] 7.1 Implement BackgroundDataWriter as @ModelActor
+- [ ] 7.2 Implement BackgroundSyncService actor (register BGTask, schedule refresh, perform sync)
+- [ ] 7.3 Wire BGAppRefreshTask registration in GitPulseApp.swift
+- [ ] 7.4 Write sync flow tests (mock API → SwiftData → streak recalculation)
 
 ## Success Criteria
-- [ ] Current streak calculated correctly for a known contribution sequence
-- [ ] Timezone conversion handles UTC→local day boundary correctly
-- [ ] Empty contribution history returns all zeros
-- [ ] Streak history contains correct start/end dates for each period
-- [ ] All streak tests pass (minimum 10 test cases)
+- [ ] performSync() fetches from all endpoints and persists to SwiftData
+- [ ] Duplicate events (same ID) are upserted, not duplicated
+- [ ] SyncMetadata is updated with last sync date and rate-limit info
+- [ ] Streak is recalculated after new contributions are persisted
+- [ ] All sync tests pass
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -72,3 +79,5 @@ Started: —
 - 2026-04-12 11:44: Session ended
 - 2026-04-12 11:45: Session ended
 - 2026-04-12 11:46: Session ended
+- 2026-04-12 11:47: Session ended
+- 2026-04-12 17:15: Session ended
