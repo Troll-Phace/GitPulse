@@ -9,7 +9,7 @@ import Foundation
 ///
 /// Each period represents a run of consecutive calendar days (in the user's
 /// local time zone) where at least one contribution was recorded.
-struct StreakPeriod: Identifiable, Sendable, Equatable {
+nonisolated struct StreakPeriod: Identifiable, Sendable, Equatable {
 
   /// Unique identifier for this streak period.
   let id: UUID
@@ -27,7 +27,7 @@ struct StreakPeriod: Identifiable, Sendable, Equatable {
 }
 
 /// A snapshot of all streak-related statistics derived from contribution dates.
-struct StreakInfo: Sendable, Equatable {
+nonisolated struct StreakInfo: Sendable, Equatable {
 
   /// The user's current active streak in days.
   let current: Int
@@ -54,7 +54,7 @@ struct StreakInfo: Sendable, Equatable {
 /// count, and a full history of contiguous activity periods.
 ///
 /// The engine is stateless and `Sendable`; all inputs are passed per call.
-struct StreakEngine: Sendable {
+nonisolated struct StreakEngine: Sendable {
 
   /// Calculates streak statistics from UTC contribution dates.
   ///

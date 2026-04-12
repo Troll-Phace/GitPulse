@@ -12,6 +12,11 @@ import Foundation
 /// so tests can verify whether (and how many times) a method was invoked.
 final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
 
+  // MARK: - Rate Limit
+
+  /// The current rate limit state exposed for protocol conformance.
+  var currentRateLimit: RateLimitState? = nil
+
   // MARK: - Stubs
 
   /// The result to return from `fetchUserProfile()`.

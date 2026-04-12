@@ -6,9 +6,20 @@
 
 import SwiftData
 import SwiftUI
+import os
+
+#if os(iOS)
+  import BackgroundTasks
+#endif
 
 @main
 struct GitPulseApp: App {
+
+  private static let logger = Logger(
+    subsystem: "com.gitpulse",
+    category: "GitPulseApp"
+  )
+
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
       Contribution.self,
@@ -37,10 +48,49 @@ struct GitPulseApp: App {
     }
   }()
 
+  init() {
+    registerBackgroundTask()
+  }
+
   var body: some Scene {
     WindowGroup {
       ContentView()
     }
     .modelContainer(sharedModelContainer)
+  }
+
+  /// Registers the background app refresh task handler.
+  ///
+  /// The handler creates a `BackgroundSyncService` on-demand when the system
+  /// fires the task. Actual token retrieval and API client construction will
+  /// be fully wired in later phases once credential management is integrated.
+  ///
+  /// - Note: `BGTaskScheduler` / `BGAppRefreshTask` is iOS-only. On macOS, background
+  ///   refresh will use `NSBackgroundActivityScheduler` or Timer-based polling.
+  private func registerBackgroundTask() {
+    #if os(iOS)
+      BGTaskScheduler.shared.register(
+        forTaskWithIdentifier: BackgroundSyncService.taskIdentifier,
+        using: nil
+      ) { task in
+        Self.logger.info("Background task fired: \(BackgroundSyncService.taskIdentifier)")
+
+        // TODO: Wire up full sync service once credential management is integrated.
+        // For now, complete the task immediately and log.
+        // In later phases, this will:
+        //   1. Retrieve the PAT from Keychain
+        //   2. Create a GitHubAPIClient with the stored credentials
+        //   3. Create a BackgroundDataWriter with the shared ModelContainer
+        //   4. Create and run BackgroundSyncService.performSync()
+        task.setTaskCompleted(success: true)
+      }
+      Self.logger.info("Registered background task: \(BackgroundSyncService.taskIdentifier)")
+    #else
+      // On macOS, BackgroundSyncService.scheduleRefresh() uses
+      // NSBackgroundActivityScheduler. It will be called after the user
+      // completes onboarding and credentials are available.
+      Self.logger.info(
+        "macOS: background sync will use NSBackgroundActivityScheduler after onboarding")
+    #endif
   }
 }

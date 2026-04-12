@@ -267,6 +267,9 @@ nonisolated protocol GitHubAPIProviding: Sendable {
   /// - Parameter token: The PAT to validate.
   /// - Returns: `true` if the token is valid (HTTP 200), `false` if unauthorized (HTTP 401).
   func validateToken(_ token: String) async throws(GitHubError) -> Bool
+
+  /// The current rate limit state, if available from a previous API response.
+  var currentRateLimit: RateLimitState? { get }
 }
 
 // MARK: - GitHubAPIClient

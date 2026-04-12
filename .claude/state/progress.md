@@ -1,12 +1,21 @@
 # Project Progress
 
 ## Current Phase
-Phase: 7
-Title: Background Sync Service
+Phase: 8
+Title: Notification Service
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 7: Background Sync Service — COMPLETED 2026-04-12
+- [x] 7.1 Added `currentRateLimit` to `GitHubAPIProviding` protocol and `MockGitHubAPIClient`
+- [x] 7.2 Implemented `BackgroundDataWriter` (@ModelActor): importContributions, importRepositories, importPullRequests, updateUserProfile, updateSyncMetadata, fetchAllContributionDates, fetchLastSyncDate
+- [x] 7.3 Implemented `BackgroundSyncService` (actor): performSync (9-step sync cycle), scheduleRefresh (NSBackgroundActivityScheduler for macOS), registerBackgroundTask. Used `#if os(iOS)` for BGAppRefreshTask (unavailable on macOS).
+- [x] 7.4 Wired BGTask registration in GitPulseApp.swift init()
+- [x] 7.5 15 BackgroundSync tests: endpoint calls, contribution/repo/PR persistence, upsert dedup, sync metadata, streak recalculation, since-date from metadata, default 90-day lookback, pagination, user profile, empty data, event type mapping
+- [x] 7.6 Marked StreakEngine/StreakPeriod/StreakInfo as nonisolated for cross-actor access (Swift 6 concurrency fix)
+- Verification: 122 total tests pass (0 failures), build clean
+
 ### Phase 6: Streak Calculation Engine — COMPLETED 2026-04-12
 - [x] 6.1 Date+Extensions.swift: startOfDay(in:) and adding(days:in:) utility methods
 - [x] 6.2 StreakEngine.swift: StreakPeriod, StreakInfo types + StreakEngine struct with timezone-aware calculate() method (3 private helpers: uniqueLocalDays, calculateCurrentStreak, buildStreakPeriods)
@@ -51,17 +60,16 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 7.1 Implement BackgroundDataWriter as @ModelActor
-- [ ] 7.2 Implement BackgroundSyncService actor (register BGTask, schedule refresh, perform sync)
-- [ ] 7.3 Wire BGAppRefreshTask registration in GitPulseApp.swift
-- [ ] 7.4 Write sync flow tests (mock API → SwiftData → streak recalculation)
+- [ ] 8.1 Implement NotificationService (request auth, schedule streak-at-risk, daily summary, milestones)
+- [ ] 8.2 Implement evaluateAlerts(streak:milestones:)
+- [ ] 8.3 Write notification evaluation tests
 
 ## Success Criteria
-- [ ] performSync() fetches from all endpoints and persists to SwiftData
-- [ ] Duplicate events (same ID) are upserted, not duplicated
-- [ ] SyncMetadata is updated with last sync date and rate-limit info
-- [ ] Streak is recalculated after new contributions are persisted
-- [ ] All sync tests pass
+- [ ] Streak-at-risk notification scheduled when no contributions today and time > 9 PM
+- [ ] Milestone notification fires for streak = 7, 30, 50, 100, 365
+- [ ] Daily summary includes correct commit/PR counts
+- [ ] Authorization request handles denial gracefully
+- [ ] All notification tests pass
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -81,3 +89,5 @@ Started: —
 - 2026-04-12 11:46: Session ended
 - 2026-04-12 11:47: Session ended
 - 2026-04-12 17:15: Session ended
+- 2026-04-12 17:52: Session ended
+- 2026-04-12 18:17: Session ended
