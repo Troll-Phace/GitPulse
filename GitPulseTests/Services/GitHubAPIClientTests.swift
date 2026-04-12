@@ -130,6 +130,70 @@ private enum FixtureData {
     """.data(using: .utf8)!
 
   static let emptyArray = "[]".data(using: .utf8)!
+
+  static let emptySearchResponse = """
+    {"total_count": 0, "items": []}
+    """.data(using: .utf8)!
+
+  static let fractionalSecondsEvents = """
+    [
+      {
+        "id": "60001",
+        "type": "PushEvent",
+        "created_at": "2024-01-15T10:30:00.123Z",
+        "repo": { "name": "octocat/hello-world" },
+        "payload": {
+          "commits": [
+            { "sha": "abc123", "message": "Test fractional seconds" }
+          ]
+        }
+      }
+    ]
+    """.data(using: .utf8)!
+
+  static let nullPayloadEvent = """
+    [
+      {
+        "id": "50001",
+        "type": "WatchEvent",
+        "created_at": "2024-01-15T12:00:00Z",
+        "repo": { "name": "octocat/test" },
+        "payload": null
+      }
+    ]
+    """.data(using: .utf8)!
+
+  static let unicodeEvents = """
+    [
+      {
+        "id": "70001",
+        "type": "PushEvent",
+        "created_at": "2024-01-15T10:30:00Z",
+        "repo": { "name": "octocat/emoji-🚀-repo" },
+        "payload": {
+          "commits": [
+            { "sha": "uni123", "message": "修复分页错误" }
+          ]
+        }
+      }
+    ]
+    """.data(using: .utf8)!
+
+  static let minimalPullRequests = """
+    {
+      "total_count": 1,
+      "items": [
+        {
+          "id": 300001,
+          "number": 99,
+          "title": "Minimal PR",
+          "state": "open",
+          "repository_url": "https://api.github.com/repos/octocat/minimal",
+          "created_at": "2024-01-15T10:00:00Z"
+        }
+      ]
+    }
+    """.data(using: .utf8)!
 }
 
 // MARK: - GitHubAPIClientTests
@@ -149,11 +213,15 @@ struct GitHubAPIClientTests {
   }
 
   /// Creates a `GitHubAPIClient` backed by the given (or a fresh mock) session.
-  private func makeClient(session: URLSession? = nil) -> GitHubAPIClient {
+  private func makeClient(
+    session: URLSession? = nil,
+    maxPaginationPages: Int = 10
+  ) -> GitHubAPIClient {
     GitHubAPIClient(
       token: "test-token",
       username: "octocat",
-      session: session ?? makeTestSession()
+      session: session ?? makeTestSession(),
+      maxPaginationPages: maxPaginationPages
     )
   }
 
@@ -566,6 +634,289 @@ struct GitHubAPIClientTests {
 
     #expect(capturedAuthHeader == "Bearer ghp_custom_token_123")
   }
+
+  // MARK: - 5xx Server Errors (Parameterized)
+
+  @Test(
+    "fetchUserProfile throws serverError for 5xx status codes",
+    arguments: [502, 503, 504]
+  )
+  func test_fetchUserProfile_throwsServerError_for5xxCodes(statusCode: Int) async {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: statusCode), Data())
+    }
+
+    await #expect(throws: GitHubError.serverError(statusCode)) {
+      try await client.fetchUserProfile()
+    }
+  }
+
+  // MARK: - Network Unavailable (Expanded URLError Codes)
+
+  @Test("validateToken throws networkUnavailable on connection failure")
+  func test_validateToken_throwsNetworkUnavailable_onConnectionFailure() async {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      throw URLError(.notConnectedToInternet)
+    }
+
+    await #expect(throws: GitHubError.networkUnavailable) {
+      try await client.validateToken("some-token")
+    }
+  }
+
+  @Test("fetchUserProfile throws networkUnavailable for timeout")
+  func test_fetchUserProfile_throwsNetworkUnavailable_forTimeout() async {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      throw URLError(.timedOut)
+    }
+
+    await #expect(throws: GitHubError.networkUnavailable) {
+      try await client.fetchUserProfile()
+    }
+  }
+
+  // MARK: - Contributions: Date Filtering Edge Cases
+
+  @Test("fetchContributions returns empty when since is in the future")
+  func test_fetchContributions_returnsEmpty_whenSinceIsInFuture() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.events)
+    }
+
+    let events = try await client.fetchContributions(since: Date.distantFuture)
+    #expect(events.isEmpty)
+  }
+
+  @Test("fetchContributions stops early when all events are before since date")
+  func test_fetchContributions_stopsEarly_whenAllEventsBeforeSince() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    nonisolated(unsafe) var requestCount = 0
+    let nextURL = "https://api.github.com/users/octocat/events?page=2&per_page=100"
+    let linkHeader = "<\(nextURL)>; rel=\"next\""
+
+    MockURLProtocol.requestHandler = { _ in
+      requestCount += 1
+      let headers = ["Link": linkHeader]
+      return (self.makeResponse(statusCode: 200, headers: headers), FixtureData.events)
+    }
+
+    // Far future date ensures all fixture events (Jan 2024) are filtered out
+    let farFuture = Date(timeIntervalSince1970: 2_000_000_000)
+    let events = try await client.fetchContributions(since: farFuture)
+
+    #expect(events.isEmpty)
+    #expect(requestCount == 1)
+  }
+
+  // MARK: - Pull Requests: Empty Results
+
+  @Test("fetchPullRequests returns empty for zero-result search")
+  func test_fetchPullRequests_returnsEmpty_forZeroResults() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.emptySearchResponse)
+    }
+
+    let prs = try await client.fetchPullRequests(state: .open, page: 1)
+    #expect(prs.isEmpty)
+  }
+
+  // MARK: - Fractional-Second ISO 8601 Decoding
+
+  @Test("fetchContributions decodes fractional-second timestamps")
+  func test_fetchContributions_decodesFractionalSecondTimestamps() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.fractionalSecondsEvents)
+    }
+
+    let events = try await client.fetchContributions(since: Date.distantPast)
+    #expect(events.count == 1)
+    #expect(events[0].id == "60001")
+  }
+
+  // MARK: - Repositories: Empty Page
+
+  @Test("fetchRepositories returns empty for an empty page")
+  func test_fetchRepositories_returnsEmpty_forEmptyPage() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.emptyArray)
+    }
+
+    let repos = try await client.fetchRepositories(page: 99)
+    #expect(repos.isEmpty)
+  }
+
+  // MARK: - Null Payload Decoding
+
+  @Test("fetchContributions decodes event with null payload")
+  func test_fetchContributions_decodesEvent_withNullPayload() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.nullPayloadEvent)
+    }
+
+    let events = try await client.fetchContributions(since: Date.distantPast)
+    #expect(events.count == 1)
+    #expect(events[0].id == "50001")
+    #expect(events[0].payload == nil)
+  }
+
+  // MARK: - Malformed Link Header Parsing
+
+  @Test("parseNextPageURL returns nil for malformed Link headers")
+  func test_parseNextPageURL_returnsNil_forMalformedLinkHeader() {
+    // Case 1: No angle brackets at all
+    let response1 = HTTPURLResponse(
+      url: URL(string: "https://api.github.com")!,
+      statusCode: 200,
+      httpVersion: nil,
+      headerFields: ["Link": "broken header no angle brackets"]
+    )!
+    #expect(GitHubAPIClient.parseNextPageURL(from: response1) == nil)
+
+    // Case 2: Empty URL between angle brackets
+    let response2 = HTTPURLResponse(
+      url: URL(string: "https://api.github.com")!,
+      statusCode: 200,
+      httpVersion: nil,
+      headerFields: ["Link": "<>; rel=\"next\""]
+    )!
+    #expect(GitHubAPIClient.parseNextPageURL(from: response2) == nil)
+
+    // Case 3: Has angle brackets but only rel="prev", no rel="next"
+    let response3 = HTTPURLResponse(
+      url: URL(string: "https://api.github.com")!,
+      statusCode: 200,
+      httpVersion: nil,
+      headerFields: ["Link": "<https://api.github.com>; rel=\"prev\""]
+    )!
+    #expect(GitHubAPIClient.parseNextPageURL(from: response3) == nil)
+  }
+
+  // MARK: - Unicode Content Decoding
+
+  @Test("fetchContributions decodes events with unicode content")
+  func test_fetchContributions_decodesUnicodeContent() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.unicodeEvents)
+    }
+
+    let events = try await client.fetchContributions(since: Date.distantPast)
+    #expect(events.count == 1)
+    #expect(events[0].repo.name == "octocat/emoji-\u{1F680}-repo")
+    #expect(
+      events[0].payload?.commits?.first?.message
+        == "\u{4FEE}\u{590D}\u{5206}\u{9875}\u{9519}\u{8BEF}")
+  }
+
+  // MARK: - Minimal Fields PR Decoding
+
+  @Test("fetchPullRequests decodes items with minimal optional fields")
+  func test_fetchPullRequests_decodes_withMinimalFields() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    MockURLProtocol.requestHandler = { _ in
+      (self.makeResponse(statusCode: 200), FixtureData.minimalPullRequests)
+    }
+
+    let prs = try await client.fetchPullRequests(state: .open, page: 1)
+    #expect(prs.count == 1)
+    #expect(prs[0].id == 300001)
+    #expect(prs[0].title == "Minimal PR")
+    #expect(prs[0].closedAt == nil)
+    #expect(prs[0].draft == nil)
+    #expect(prs[0].pullRequest == nil)
+  }
+
+  // MARK: - Rate Limit Thread Safety
+
+  @Test("Rate limit state is not corrupted under concurrent access")
+  func test_rateLimitState_threadSafe_underConcurrentAccess() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session)
+
+    nonisolated(unsafe) var callIndex = 0
+    MockURLProtocol.requestHandler = { _ in
+      callIndex += 1
+      let remaining = 5000 - callIndex
+      let headers = [
+        "X-RateLimit-Limit": "5000",
+        "X-RateLimit-Remaining": "\(remaining)",
+        "X-RateLimit-Reset": "1705400000",
+      ]
+      return (self.makeResponse(statusCode: 200, headers: headers), FixtureData.userProfile)
+    }
+
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for _ in 0..<12 {
+        group.addTask {
+          _ = try await client.fetchUserProfile()
+        }
+      }
+      try await group.waitForAll()
+    }
+
+    let rateLimit = client.currentRateLimit
+    #expect(rateLimit != nil)
+    #expect(rateLimit?.limit == 5000)
+    // remaining should be a valid value (not corrupted)
+    #expect(rateLimit!.remaining >= 0)
+    #expect(rateLimit!.remaining < 5000)
+  }
+
+  // MARK: - Max Pagination Pages
+
+  @Test("fetchContributions stops at maxPaginationPages limit")
+  func test_fetchContributions_stopsAtMaxPages() async throws {
+    let session = makeTestSession()
+    let client = makeClient(session: session, maxPaginationPages: 2)
+
+    nonisolated(unsafe) var requestCount = 0
+    let nextURL = "https://api.github.com/users/octocat/events?page=99&per_page=100"
+    let linkHeader = "<\(nextURL)>; rel=\"next\""
+
+    MockURLProtocol.requestHandler = { _ in
+      requestCount += 1
+      let headers = ["Link": linkHeader]
+      return (self.makeResponse(statusCode: 200, headers: headers), FixtureData.events)
+    }
+
+    // Use distantPast so all events pass the date filter
+    let events = try await client.fetchContributions(since: Date.distantPast)
+
+    // Should have fetched exactly 2 pages (maxPaginationPages)
+    #expect(requestCount == 2)
+    // Each page returns 3 events from the fixture
+    #expect(events.count == 6)
+  }
 }
 
 // MARK: - MockGitHubAPIClientTests
@@ -637,5 +988,81 @@ struct MockGitHubAPIClientTests {
     #expect(mock.fetchPullRequestsCallCount == 1)
     #expect(mock.lastFetchPullRequestsState == .merged)
     #expect(mock.lastFetchPullRequestsPage == 2)
+  }
+
+  @Test("Result sequence pops elements then falls back to single result")
+  func test_mock_resultSequence_popsAndFallsBack() async throws {
+    let mock = MockGitHubAPIClient()
+
+    let user1 = GitHubUser(
+      login: "first",
+      id: 1,
+      avatarUrl: "https://example.com/1.png",
+      name: nil,
+      bio: nil,
+      publicRepos: 0,
+      followers: 0
+    )
+    let user2 = GitHubUser(
+      login: "second",
+      id: 2,
+      avatarUrl: "https://example.com/2.png",
+      name: nil,
+      bio: nil,
+      publicRepos: 0,
+      followers: 0
+    )
+    let fallbackUser = GitHubUser(
+      login: "fallback",
+      id: 99,
+      avatarUrl: "https://example.com/fallback.png",
+      name: nil,
+      bio: nil,
+      publicRepos: 0,
+      followers: 0
+    )
+
+    mock.fetchUserProfileResults = [.success(user1), .success(user2)]
+    mock.fetchUserProfileResult = .success(fallbackUser)
+
+    // First call: pops user1 from sequence
+    let result1 = try await mock.fetchUserProfile()
+    #expect(result1.login == "first")
+
+    // Second call: pops user2 from sequence
+    let result2 = try await mock.fetchUserProfile()
+    #expect(result2.login == "second")
+
+    // Third call: sequence exhausted, falls back to single result
+    let result3 = try await mock.fetchUserProfile()
+    #expect(result3.login == "fallback")
+
+    #expect(mock.fetchUserProfileCallCount == 3)
+  }
+
+  @Test("Result sequence supports mixed success and failure")
+  func test_mock_resultSequence_mixedSuccessAndFailure() async throws {
+    let mock = MockGitHubAPIClient()
+
+    mock.validateTokenResults = [
+      .success(true),
+      .failure(.networkUnavailable),
+      .success(false),
+    ]
+
+    // First call: success
+    let first = try await mock.validateToken("token1")
+    #expect(first == true)
+
+    // Second call: throws error
+    await #expect(throws: GitHubError.networkUnavailable) {
+      try await mock.validateToken("token2")
+    }
+
+    // Third call: success with false
+    let third = try await mock.validateToken("token3")
+    #expect(third == false)
+
+    #expect(mock.validateTokenCallCount == 3)
   }
 }

@@ -17,17 +17,42 @@ final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
   /// The result to return from `fetchUserProfile()`.
   var fetchUserProfileResult: Result<GitHubUser, GitHubError> = .failure(.unauthorized)
 
+  /// An ordered sequence of results for `fetchUserProfile()`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `fetchUserProfileResult` when the sequence is exhausted or nil.
+  var fetchUserProfileResults: [Result<GitHubUser, GitHubError>]?
+
   /// The result to return from `fetchContributions(since:)`.
   var fetchContributionsResult: Result<[GitHubEvent], GitHubError> = .success([])
+
+  /// An ordered sequence of results for `fetchContributions(since:)`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `fetchContributionsResult` when the sequence is exhausted or nil.
+  var fetchContributionsResults: [Result<[GitHubEvent], GitHubError>]?
 
   /// The result to return from `fetchRepositories(page:)`.
   var fetchRepositoriesResult: Result<[GitHubRepo], GitHubError> = .success([])
 
+  /// An ordered sequence of results for `fetchRepositories(page:)`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `fetchRepositoriesResult` when the sequence is exhausted or nil.
+  var fetchRepositoriesResults: [Result<[GitHubRepo], GitHubError>]?
+
   /// The result to return from `fetchPullRequests(state:page:)`.
   var fetchPullRequestsResult: Result<[GitHubPR], GitHubError> = .success([])
 
+  /// An ordered sequence of results for `fetchPullRequests(state:page:)`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `fetchPullRequestsResult` when the sequence is exhausted or nil.
+  var fetchPullRequestsResults: [Result<[GitHubPR], GitHubError>]?
+
   /// The result to return from `validateToken(_:)`.
   var validateTokenResult: Result<Bool, GitHubError> = .success(true)
+
+  /// An ordered sequence of results for `validateToken(_:)`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `validateTokenResult` when the sequence is exhausted or nil.
+  var validateTokenResults: [Result<Bool, GitHubError>]?
 
   // MARK: - Call Tracking
 
@@ -61,23 +86,40 @@ final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
   /// The token passed to the most recent `validateToken(_:)` call.
   private(set) var lastValidatedToken: String?
 
+  // MARK: - Helpers
+
+  /// Returns the next result from an optional sequence, removing it from the array.
+  /// Falls back to the single-value result when the sequence is nil or exhausted.
+  private func nextResult<T>(
+    from sequence: inout [Result<T, GitHubError>]?,
+    fallback: Result<T, GitHubError>
+  ) -> Result<T, GitHubError> {
+    if var results = sequence, !results.isEmpty {
+      let next = results.removeFirst()
+      sequence = results
+      return next
+    }
+    return fallback
+  }
+
   // MARK: - GitHubAPIProviding
 
   func fetchUserProfile() async throws(GitHubError) -> GitHubUser {
     fetchUserProfileCallCount += 1
-    return try fetchUserProfileResult.get()
+    return try nextResult(from: &fetchUserProfileResults, fallback: fetchUserProfileResult).get()
   }
 
   func fetchContributions(since: Date) async throws(GitHubError) -> [GitHubEvent] {
     fetchContributionsCallCount += 1
     lastFetchContributionsSince = since
-    return try fetchContributionsResult.get()
+    return try nextResult(from: &fetchContributionsResults, fallback: fetchContributionsResult)
+      .get()
   }
 
   func fetchRepositories(page: Int) async throws(GitHubError) -> [GitHubRepo] {
     fetchRepositoriesCallCount += 1
     lastFetchRepositoriesPage = page
-    return try fetchRepositoriesResult.get()
+    return try nextResult(from: &fetchRepositoriesResults, fallback: fetchRepositoriesResult).get()
   }
 
   func fetchPullRequests(state: PullRequest.PRState, page: Int) async throws(GitHubError)
@@ -86,12 +128,14 @@ final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
     fetchPullRequestsCallCount += 1
     lastFetchPullRequestsState = state
     lastFetchPullRequestsPage = page
-    return try fetchPullRequestsResult.get()
+    return try nextResult(
+      from: &fetchPullRequestsResults, fallback: fetchPullRequestsResult
+    ).get()
   }
 
   func validateToken(_ token: String) async throws(GitHubError) -> Bool {
     validateTokenCallCount += 1
     lastValidatedToken = token
-    return try validateTokenResult.get()
+    return try nextResult(from: &validateTokenResults, fallback: validateTokenResult).get()
   }
 }

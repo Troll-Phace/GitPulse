@@ -291,7 +291,18 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
   /// The shared JSON decoder configured for GitHub API responses.
   private static let decoder: JSONDecoder = {
     let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let string = try container.decode(String.self)
+      let formatter = ISO8601DateFormatter()
+      formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+      if let date = formatter.date(from: string) { return date }
+      formatter.formatOptions = [.withInternetDateTime]
+      if let date = formatter.date(from: string) { return date }
+      throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Invalid ISO 8601 date: \(string)")
+    }
     decoder.keyDecodingStrategy = .convertFromSnakeCase
     return decoder
   }()
@@ -364,7 +375,12 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
 
     do {
       (data, response) = try await session.data(for: authenticatedRequest)
-    } catch let urlError as URLError where urlError.code == .notConnectedToInternet {
+    } catch let urlError as URLError
+      where [
+        .notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotFindHost,
+        .cannotConnectToHost,
+      ].contains(urlError.code)
+    {
       throw .networkUnavailable
     } catch {
       throw .unknown(underlying: error)
@@ -439,7 +455,9 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
       return nil
     }
 
-    let parts = linkHeader.components(separatedBy: ", ")
+    let parts = linkHeader.components(separatedBy: ",").map {
+      $0.trimmingCharacters(in: .whitespaces)
+    }
 
     for part in parts {
       guard part.contains("rel=\"next\"") else {
@@ -633,7 +651,12 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
 
     do {
       (data, response) = try await session.data(for: request)
-    } catch let urlError as URLError where urlError.code == .notConnectedToInternet {
+    } catch let urlError as URLError
+      where [
+        .notConnectedToInternet, .timedOut, .networkConnectionLost, .cannotFindHost,
+        .cannotConnectToHost,
+      ].contains(urlError.code)
+    {
       throw .networkUnavailable
     } catch {
       throw .unknown(underlying: error)
