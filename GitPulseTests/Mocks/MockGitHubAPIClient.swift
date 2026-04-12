@@ -5,4 +5,93 @@ import Foundation
 
 @testable import GitPulse
 
-// TODO: Phase 4 implementation — Mock GitHub API client
+/// In-memory mock of `GitHubAPIProviding` for unit tests.
+///
+/// Each method returns the value stored in its corresponding `Result` stub,
+/// or throws the error contained in that `Result`. Call counts are tracked
+/// so tests can verify whether (and how many times) a method was invoked.
+final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
+
+  // MARK: - Stubs
+
+  /// The result to return from `fetchUserProfile()`.
+  var fetchUserProfileResult: Result<GitHubUser, GitHubError> = .failure(.unauthorized)
+
+  /// The result to return from `fetchContributions(since:)`.
+  var fetchContributionsResult: Result<[GitHubEvent], GitHubError> = .success([])
+
+  /// The result to return from `fetchRepositories(page:)`.
+  var fetchRepositoriesResult: Result<[GitHubRepo], GitHubError> = .success([])
+
+  /// The result to return from `fetchPullRequests(state:page:)`.
+  var fetchPullRequestsResult: Result<[GitHubPR], GitHubError> = .success([])
+
+  /// The result to return from `validateToken(_:)`.
+  var validateTokenResult: Result<Bool, GitHubError> = .success(true)
+
+  // MARK: - Call Tracking
+
+  /// The number of times `fetchUserProfile()` has been called.
+  private(set) var fetchUserProfileCallCount = 0
+
+  /// The number of times `fetchContributions(since:)` has been called.
+  private(set) var fetchContributionsCallCount = 0
+
+  /// The `since` argument passed to the most recent `fetchContributions(since:)` call.
+  private(set) var lastFetchContributionsSince: Date?
+
+  /// The number of times `fetchRepositories(page:)` has been called.
+  private(set) var fetchRepositoriesCallCount = 0
+
+  /// The `page` argument passed to the most recent `fetchRepositories(page:)` call.
+  private(set) var lastFetchRepositoriesPage: Int?
+
+  /// The number of times `fetchPullRequests(state:page:)` has been called.
+  private(set) var fetchPullRequestsCallCount = 0
+
+  /// The `state` argument passed to the most recent `fetchPullRequests(state:page:)` call.
+  private(set) var lastFetchPullRequestsState: PullRequest.PRState?
+
+  /// The `page` argument passed to the most recent `fetchPullRequests(state:page:)` call.
+  private(set) var lastFetchPullRequestsPage: Int?
+
+  /// The number of times `validateToken(_:)` has been called.
+  private(set) var validateTokenCallCount = 0
+
+  /// The token passed to the most recent `validateToken(_:)` call.
+  private(set) var lastValidatedToken: String?
+
+  // MARK: - GitHubAPIProviding
+
+  func fetchUserProfile() async throws(GitHubError) -> GitHubUser {
+    fetchUserProfileCallCount += 1
+    return try fetchUserProfileResult.get()
+  }
+
+  func fetchContributions(since: Date) async throws(GitHubError) -> [GitHubEvent] {
+    fetchContributionsCallCount += 1
+    lastFetchContributionsSince = since
+    return try fetchContributionsResult.get()
+  }
+
+  func fetchRepositories(page: Int) async throws(GitHubError) -> [GitHubRepo] {
+    fetchRepositoriesCallCount += 1
+    lastFetchRepositoriesPage = page
+    return try fetchRepositoriesResult.get()
+  }
+
+  func fetchPullRequests(state: PullRequest.PRState, page: Int) async throws(GitHubError)
+    -> [GitHubPR]
+  {
+    fetchPullRequestsCallCount += 1
+    lastFetchPullRequestsState = state
+    lastFetchPullRequestsPage = page
+    return try fetchPullRequestsResult.get()
+  }
+
+  func validateToken(_ token: String) async throws(GitHubError) -> Bool {
+    validateTokenCallCount += 1
+    lastValidatedToken = token
+    return try validateTokenResult.get()
+  }
+}

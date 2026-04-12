@@ -1,1 +1,49 @@
-[]
+[
+  {
+    "id": "40001",
+    "type": "PushEvent",
+    "created_at": "2024-01-15T10:30:00Z",
+    "repo": {
+      "name": "octocat/hello-world"
+    },
+    "payload": {
+      "commits": [
+        {
+          "sha": "abc123def456",
+          "message": "Fix off-by-one error in pagination"
+        },
+        {
+          "sha": "789ghi012jkl",
+          "message": "Add unit tests for pagination helper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "40002",
+    "type": "PullRequestEvent",
+    "created_at": "2024-01-14T16:45:00Z",
+    "repo": {
+      "name": "octocat/spoon-knife"
+    },
+    "payload": {
+      "action": "opened",
+      "pull_request": {
+        "number": 42,
+        "title": "Add dark mode support",
+        "additions": 120,
+        "deletions": 30,
+        "changed_files": 8
+      }
+    }
+  },
+  {
+    "id": "40003",
+    "type": "CreateEvent",
+    "created_at": "2024-01-13T09:00:00Z",
+    "repo": {
+      "name": "octocat/new-repo"
+    },
+    "payload": {}
+  }
+]

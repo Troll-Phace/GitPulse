@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": 100001,
+    "name": "hello-world",
+    "full_name": "octocat/hello-world",
+    "description": "A sample repository for testing",
+    "language": "Swift",
+    "stargazers_count": 42,
+    "forks_count": 10,
+    "private": false,
+    "pushed_at": "2024-01-15T10:30:00Z",
+    "created_at": "2023-06-01T12:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  {
+    "id": 100002,
+    "name": "private-project",
+    "full_name": "octocat/private-project",
+    "description": null,
+    "language": null,
+    "stargazers_count": 0,
+    "forks_count": 0,
+    "private": true,
+    "pushed_at": null,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-12T14:30:00Z"
+  }
+]

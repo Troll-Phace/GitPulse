@@ -1,12 +1,21 @@
 # Project Progress
 
 ## Current Phase
-Phase: 4
-Title: GitHub API Client — Core
+Phase: 5
+Title: GitHub API Client — Endpoints
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 4: GitHub API Client — Core — COMPLETED 2026-04-12
+- [x] 4.1 GitHubAPIClient class with URLSession, Bearer auth header, Accept header, performRequest core method
+- [x] 4.2 GitHubError typed error enum with 7 cases (unauthorized, rateLimited, notFound, networkUnavailable, serverError, decodingFailed, unknown) + manual Equatable
+- [x] 4.3 Rate-limit tracking via X-RateLimit-* header parsing, RateLimitState struct, OSAllocatedUnfairLock storage
+- [x] 4.4 Link header pagination parser (parseNextPageURL static method)
+- [x] 4.5 26 tests: MockURLProtocol, MockGitHubAPIClient, 4 JSON fixtures, 21 API client tests + 5 mock fidelity tests
+- Extras: All 5 endpoint methods fully implemented (fetchUserProfile, fetchContributions, fetchRepositories, fetchPullRequests, validateToken), 6 DTO types
+- Verification: 75 total tests pass (0 failures), build clean
+
 ### Phase 3: Keychain Service — COMPLETED 2026-04-12
 - [x] 3.1 KeychainError enum + KeychainProviding protocol + KeychainService struct (SecItem API, upsert semantics, injectable service name)
 - [x] 3.2 MockKeychainService (dictionary-backed, @unchecked Sendable)
@@ -26,21 +35,23 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 4.1 Implement GitHubAPIClient with URLSession, auth header, error handling
-- [ ] 4.2 Implement GitHubError typed error enum
-- [ ] 4.3 Implement rate-limit tracking (X-RateLimit-* headers)
-- [ ] 4.4 Implement Link header pagination parser
-- [ ] 4.5 Write tests with URLProtocol mock
+- [ ] 5.1 Implement fetchContributions(since:) with date filtering and pagination
+- [ ] 5.2 Implement fetchRepositories(page:) with pagination
+- [ ] 5.3 Implement fetchPullRequests(state:page:) with search API
+- [ ] 5.4 Implement validateToken(_:)
+- [ ] 5.5 Write tests with JSON fixture files for each endpoint
 
 ## Success Criteria
-- [ ] fetchUserProfile() decodes a mock /user response correctly
-- [ ] 401 response throws .unauthorized
-- [ ] 403 with rate-limit headers throws .rateLimited with correct reset date
-- [ ] Pagination fetches all pages until rel="next" is absent
-- [ ] All API client tests pass
+- [ ] Each endpoint correctly decodes mock JSON fixtures
+- [ ] Date filtering in fetchContributions excludes events before the since parameter
+- [ ] validateToken returns false for 401, true for 200
+- [ ] All endpoint tests pass with fixture data
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
 - 2026-04-12: Phase 2 completed. All 6 SwiftData models, SchemaV1, migration plan, 23 tests passing. Build clean.
 - 2026-04-12: Phase 3 completed. KeychainService with SecItem API, MockKeychainService, 13 new tests (37 total). All pass.
 - 2026-04-12 10:43: Session ended
+- 2026-04-12 10:46: Session ended
+- 2026-04-12: Phase 4 completed. GitHubAPIClient (683 lines): GitHubError, RateLimitState, 6 DTOs, protocol, full client. MockURLProtocol, MockGitHubAPIClient, 4 JSON fixtures, 26 new tests (75 total). All pass.
+- 2026-04-12 11:11: Session ended
