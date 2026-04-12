@@ -10,7 +10,14 @@ import SwiftUI
 @main
 struct GitPulseApp: App {
   var sharedModelContainer: ModelContainer = {
-    let schema = Schema([])
+    let schema = Schema([
+      Contribution.self,
+      Repository.self,
+      LanguageStat.self,
+      PullRequest.self,
+      UserProfile.self,
+      SyncMetadata.self,
+    ])
     // TODO: Re-enable groupContainer when app group is registered with Apple Developer account
     // groupContainer: .identifier("group.com.gitpulse.shared")
     let modelConfiguration = ModelConfiguration(
@@ -22,6 +29,7 @@ struct GitPulseApp: App {
     do {
       return try ModelContainer(
         for: schema,
+        migrationPlan: GitPulseSchemaMigrationPlan.self,
         configurations: [modelConfiguration]
       )
     } catch {
