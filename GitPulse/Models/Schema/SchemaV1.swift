@@ -1,0 +1,7 @@
+//  SchemaV1.swift
+//  GitPulse
+
+import Foundation
+import SwiftData
+
+// TODO: Phase 2 implementation — VersionedSchema for v1
