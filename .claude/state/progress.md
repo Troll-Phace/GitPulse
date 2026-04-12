@@ -1,12 +1,19 @@
 # Project Progress
 
 ## Current Phase
-Phase: 8
-Title: Notification Service
+Phase: 9
+Title: Onboarding Flow
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 8: Notification Service — COMPLETED 2026-04-12
+- [x] 8.1 Implemented NotificationService: `GitPulseNotification`, `MilestoneType`, `NotificationError`, `NotificationIdentifier` enums; `NotificationCenterProviding` protocol + `SystemNotificationCenter` wrapper; `NotificationProviding` protocol + `NotificationService` struct
+- [x] 8.2 Implemented `evaluateAlerts(streakInfo:totalCommits:totalPRsMerged:todayCommits:todayPRs:)`: streak-at-risk (configurable hour, default 21:00), streak-broken (00:05), daily summary (22:00), milestone dedup via UserDefaults
+- [x] 8.3 Integrated into BackgroundSyncService: optional `notificationService` param in init, `evaluateAlerts` called after sync step 9 with `try?` (non-breaking)
+- [x] 8.4 MockNotificationCenter + 14 test methods (18 executions with parameterized): auth, streak-at-risk, streak-broken, daily summary, milestone thresholds, dedup, configurable alert hour, cancel all
+- Verification: 153 total tests pass (0 failures), build clean
+
 ### Phase 7: Background Sync Service — COMPLETED 2026-04-12
 - [x] 7.1 Added `currentRateLimit` to `GitHubAPIProviding` protocol and `MockGitHubAPIClient`
 - [x] 7.2 Implemented `BackgroundDataWriter` (@ModelActor): importContributions, importRepositories, importPullRequests, updateUserProfile, updateSyncMetadata, fetchAllContributionDates, fetchLastSyncDate
@@ -60,16 +67,19 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 8.1 Implement NotificationService (request auth, schedule streak-at-risk, daily summary, milestones)
-- [ ] 8.2 Implement evaluateAlerts(streak:milestones:)
-- [ ] 8.3 Write notification evaluation tests
+- [ ] 9.1 Implement OnboardingFlow with TabView pagination (Welcome, Token Setup, Repo Selection, Completion)
+- [ ] 9.2 Implement TokenSetupStep with secure text field, validation, PAT instructions
+- [ ] 9.3 Implement RepoSelectionStep with repo fetch and selection
+- [ ] 9.4 Apply Liquid Glass styling to all onboarding steps
+- [ ] 9.5 Write ViewModel tests for onboarding flows
 
 ## Success Criteria
-- [ ] Streak-at-risk notification scheduled when no contributions today and time > 9 PM
-- [ ] Milestone notification fires for streak = 7, 30, 50, 100, 365
-- [ ] Daily summary includes correct commit/PR counts
-- [ ] Authorization request handles denial gracefully
-- [ ] All notification tests pass
+- [ ] Onboarding shows on first launch, not on subsequent launches
+- [ ] Token validates against GitHub API before proceeding
+- [ ] Invalid token shows inline error message
+- [ ] Token is stored in Keychain after validation
+- [ ] Repo selection fetches and displays user's repos
+- [ ] All views use Liquid Glass effects
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -91,3 +101,5 @@ Started: —
 - 2026-04-12 17:15: Session ended
 - 2026-04-12 17:52: Session ended
 - 2026-04-12 18:17: Session ended
+- 2026-04-12 18:20: Session ended
+- 2026-04-12 18:49: Session ended

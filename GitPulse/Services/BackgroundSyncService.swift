@@ -356,6 +356,9 @@ actor BackgroundSyncService {
   /// The streak calculation engine.
   private let streakEngine: StreakEngine
 
+  /// The optional notification service for post-sync alerts.
+  private let notificationService: NotificationProviding?
+
   #if os(macOS)
     /// The background activity scheduler for periodic sync on macOS.
     private var activityScheduler: NSBackgroundActivityScheduler?
@@ -367,14 +370,17 @@ actor BackgroundSyncService {
   ///   - apiClient: The GitHub API client to use for fetching data.
   ///   - dataWriter: The model actor for persisting data to SwiftData.
   ///   - streakEngine: The streak calculator (defaults to a new instance).
+  ///   - notificationService: The notification service for post-sync alerts (defaults to `nil`).
   init(
     apiClient: GitHubAPIProviding,
     dataWriter: BackgroundDataWriter,
-    streakEngine: StreakEngine = StreakEngine()
+    streakEngine: StreakEngine = StreakEngine(),
+    notificationService: NotificationProviding? = nil
   ) {
     self.apiClient = apiClient
     self.dataWriter = dataWriter
     self.streakEngine = streakEngine
+    self.notificationService = notificationService
   }
 
   // MARK: - BGTask Management
@@ -617,6 +623,24 @@ actor BackgroundSyncService {
       )
     } catch {
       throw SyncError.persistenceError(error)
+    }
+
+    // 10. Evaluate notification alerts (failures do not fail the sync)
+    if let notificationService {
+      let todayCommits = allDates.filter { Calendar.current.isDateInToday($0) }.count
+      let todayPRsMerged = allPRs.filter { $0.pullRequest?.mergedAt != nil }.count
+      let todayPRs = allPRs.filter { Calendar.current.isDateInToday($0.createdAt) }.count
+      do {
+        try await notificationService.evaluateAlerts(
+          streakInfo: streakInfo,
+          totalCommits: allDates.count,
+          totalPRsMerged: todayPRsMerged,
+          todayCommits: todayCommits,
+          todayPRs: todayPRs
+        )
+      } catch {
+        Self.logger.error("Notification evaluation failed: \(error.localizedDescription)")
+      }
     }
 
     Self.logger.info(
