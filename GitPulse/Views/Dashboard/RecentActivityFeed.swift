@@ -119,7 +119,7 @@ private struct ActivityRow: View {
         .font(.gpCaption)
         .foregroundStyle(Color.gpTextTertiary)
     }
-    .padding(.vertical, DesignTokens.spacingSM)
+    .padding(.vertical, DesignTokens.spacingXXS)
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(item.title). \(item.subtitle). \(item.relativeTime)")
   }

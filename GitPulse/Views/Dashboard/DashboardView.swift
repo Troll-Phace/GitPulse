@@ -77,21 +77,26 @@ struct DashboardView: View {
   /// The full dashboard layout with all sections.
   private var dataView: some View {
     ScrollView(.vertical, showsIndicators: false) {
-      VStack(spacing: DesignTokens.spacingLG) {
+      VStack(spacing: 0) {
         StatCardsRow(viewModel: viewModel)
+          .padding(.bottom, DesignTokens.spacingLG)
 
         ContributionHeatmap(
           cells: viewModel.buildHeatmapCells(),
           totalContributions: viewModel.totalContributionsInPeriod
         )
+        .padding(.bottom, DesignTokens.spacingMD)
 
         HStack(alignment: .top, spacing: DesignTokens.spacingSM) {
           WeeklyActivityChart(days: viewModel.buildWeeklyActivity())
             .frame(maxWidth: .infinity)
+            .layoutPriority(1)
 
           RecentActivityFeed(items: viewModel.buildRecentActivity())
-            .frame(maxWidth: .infinity)
+            .frame(minWidth: 300, idealWidth: 350, maxWidth: 400)
         }
+        .frame(minHeight: 200)
+        .padding(.bottom, DesignTokens.spacingLG)
 
         syncStatusBar
       }

@@ -27,7 +27,7 @@ struct GlassCard<Content: View>: View {
   var body: some View {
     content
       .padding(DesignTokens.spacingMD)
-      .glassEffect()
+      .glassEffect(in: .rect(cornerRadius: DesignTokens.radiusCard))
       .clipShape(RoundedRectangle(cornerRadius: DesignTokens.radiusCard))
   }
 }

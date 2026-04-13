@@ -339,7 +339,7 @@ final class DashboardViewModel {
   /// - Returns: Up to 10 `ActivityFeedItem` values, sorted by most recent first.
   func buildRecentActivity() -> [ActivityFeedItem] {
     let sorted = contributions.sorted { $0.date > $1.date }
-    let recent = sorted.prefix(10)
+    let recent = sorted.prefix(5)
     let formatter = RelativeDateTimeFormatter()
     formatter.unitsStyle = .abbreviated
 

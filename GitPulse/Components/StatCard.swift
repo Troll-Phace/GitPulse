@@ -86,7 +86,7 @@ struct StatCard<Accessory: View>: View {
   private static var accentBarHeight: CGFloat { 2 }
 
   /// Vertical offset from the top edge for the accent bar.
-  private static var accentBarTopOffset: CGFloat { DesignTokens.spacingXS }
+  private static var accentBarTopOffset: CGFloat { 0 }
 
   /// Horizontal offset from the leading edge for the accent bar.
   private static var accentBarLeadingOffset: CGFloat { DesignTokens.spacingMD }
@@ -111,7 +111,7 @@ struct StatCard<Accessory: View>: View {
         )
     }
     .frame(height: DesignTokens.statCardHeight)
-    .glassEffect()
+    .glassEffect(in: .rect(cornerRadius: DesignTokens.radiusStat))
     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.radiusStat))
     .accessibilityElement(children: .combine)
   }
@@ -122,16 +122,18 @@ struct StatCard<Accessory: View>: View {
   private var metricContent: some View {
     VStack(alignment: .leading, spacing: DesignTokens.spacingXXS) {
       Text(title)
-        .font(.gpCaption)
+        .font(.gpMicro)
         .foregroundStyle(Color.gpTextSecondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
 
       Text(value)
-        .font(.gpSectionHeader)
+        .font(.gpStatValue)
         .foregroundStyle(Color.gpTextPrimary)
 
       if let subtitle {
         Text(subtitle)
-          .font(.gpCaption)
+          .font(.gpMicro)
           .foregroundStyle(Color.gpTextSecondary)
       }
 

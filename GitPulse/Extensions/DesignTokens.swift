@@ -64,8 +64,8 @@ enum DesignTokens {
   /// Minimum window height (600pt).
   static let minWindowHeight: CGFloat = 600
 
-  /// Standard stat card height (90pt).
-  static let statCardHeight: CGFloat = 90
+  /// Standard stat card height (100pt).
+  static let statCardHeight: CGFloat = 100
 
   /// Standard repo card height (80pt).
   static let repoCardHeight: CGFloat = 80
@@ -120,6 +120,9 @@ extension Font {
 
   /// Section header (22pt semibold) — used for grouping content within a view.
   static let gpSectionHeader = Font.system(size: 22, weight: .semibold, design: .default)
+
+  /// Stat card value (28pt bold) — used for prominent metric numbers in stat cards.
+  static let gpStatValue = Font.system(size: 28, weight: .bold, design: .default)
 
   /// Card title (17pt semibold) — used for titles within glass cards.
   static let gpCardTitle = Font.system(size: 17, weight: .semibold, design: .default)

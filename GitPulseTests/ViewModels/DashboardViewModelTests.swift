@@ -655,8 +655,8 @@ struct DashboardViewModelTests {
     #expect(feed[2].title == "Pushed 3 commits")
   }
 
-  @Test("Recent activity feed is limited to 10 items")
-  func test_dashboard_recentActivity_limitedTo10Items() {
+  @Test("Recent activity feed is limited to 5 items")
+  func test_dashboard_recentActivity_limitedTo5Items() {
     let vm = DashboardViewModel()
     let now = Date.now
 
@@ -678,7 +678,7 @@ struct DashboardViewModelTests {
 
     let feed = vm.buildRecentActivity()
 
-    #expect(feed.count == 10)
+    #expect(feed.count == 5)
   }
 
   @Test("Recent activity push title handles single commit correctly")

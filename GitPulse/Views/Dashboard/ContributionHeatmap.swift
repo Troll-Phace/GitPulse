@@ -57,9 +57,13 @@ struct ContributionHeatmap: View {
     }
   }
 
-  /// The Swift Charts heatmap grid.
+  /// The Swift Charts heatmap grid with month labels above and day labels on the left.
   private var chartBody: some View {
-    Chart(cells) { cell in
+    let boundaries = filteredMonthBoundaries()
+    let axisValues = boundaries.map(\.weekIndex)
+    let labelMap = Dictionary(uniqueKeysWithValues: boundaries.map { ($0.weekIndex, $0.label) })
+
+    return Chart(cells) { cell in
       RectangleMark(
         xStart: .value("Week", cell.weekIndex),
         xEnd: .value("Week", cell.weekIndex + 1),
@@ -71,7 +75,19 @@ struct ContributionHeatmap: View {
     }
     .chartXScale(domain: 0...16)
     .chartYScale(domain: 0...7)
-    .chartXAxis(.hidden)
+    .chartXAxis {
+      AxisMarks(position: .top, values: axisValues) { value in
+        AxisValueLabel(anchor: .bottomLeading) {
+          if let weekIndex = value.as(Int.self),
+            let label = labelMap[weekIndex]
+          {
+            Text(label)
+              .font(.gpMicro)
+              .foregroundStyle(Color.gpTextTertiary)
+          }
+        }
+      }
+    }
     .chartYAxis {
       AxisMarks(values: [1, 3, 5]) { value in
         AxisValueLabel {
@@ -84,7 +100,7 @@ struct ContributionHeatmap: View {
       }
     }
     .chartLegend(.hidden)
-    .frame(height: 120)
+    .frame(height: 140)
     .animation(
       reduceMotion ? .none : .easeOut(duration: DesignTokens.animationChartDraw),
       value: cells.count
@@ -129,6 +145,44 @@ struct ContributionHeatmap: View {
   }
 
   // MARK: - Helpers
+
+  /// Builds month boundary labels, filtered to avoid crowding.
+  ///
+  /// Walks cells chronologically and records the week index where each new month
+  /// first appears. Boundaries within 2 weeks of each other are merged (keeping
+  /// the later month which has more representation in the grid).
+  private func filteredMonthBoundaries() -> [(weekIndex: Int, label: String)] {
+    let calendar = Calendar.current
+    let sorted = cells.sorted { $0.id < $1.id }
+    let formatter = DateFormatter()
+    formatter.dateFormat = "MMM"
+
+    var raw: [(weekIndex: Int, label: String)] = []
+    var lastMonth: Int?
+
+    for cell in sorted {
+      let month = calendar.component(.month, from: cell.id)
+      if month != lastMonth {
+        let label = formatter.string(from: cell.id)
+        if raw.last?.weekIndex != cell.weekIndex {
+          raw.append((weekIndex: cell.weekIndex, label: label))
+        }
+        lastMonth = month
+      }
+    }
+
+    // Filter out boundaries too close together (< 3 weeks apart).
+    // When two are close, keep the later one (it has more weeks in the grid).
+    var filtered: [(weekIndex: Int, label: String)] = []
+    for boundary in raw {
+      if let last = filtered.last, boundary.weekIndex - last.weekIndex < 3 {
+        filtered[filtered.count - 1] = boundary
+      } else {
+        filtered.append(boundary)
+      }
+    }
+    return filtered
+  }
 
   /// Maps an intensity level (0-4) to the corresponding heatmap color.
   private func heatmapColor(for level: Int) -> Color {
