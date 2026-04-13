@@ -101,8 +101,12 @@ actor BackgroundDataWriter {
 
       switch contributionType {
       case .push:
-        commitCount = event.payload?.commits?.count ?? 0
-        message = event.payload?.commits?.first?.message
+        commitCount = event.payload?.commits?.count ?? event.payload?.size ?? 1
+        message =
+          event.payload?.commits?.first?.message
+          ?? event.payload?.ref.map {
+            "Pushed to \($0.replacingOccurrences(of: "refs/heads/", with: ""))"
+          }
       case .pullRequest:
         message = event.payload?.pullRequest?.title
         additions = event.payload?.pullRequest?.additions ?? 0
@@ -652,11 +656,15 @@ actor BackgroundSyncService {
   func performSync() async throws {
     Self.logger.info("Starting sync cycle")
 
-    // 1. Determine since date
+    // 1. Determine since date (with 10-minute overlap to catch delayed events)
     let sinceDate: Date
     do {
       let lastSync = try await dataWriter.fetchLastSyncDate()
-      sinceDate = lastSync ?? Date.now.addingTimeInterval(-Self.defaultLookbackDays)
+      if let lastSync {
+        sinceDate = lastSync.addingTimeInterval(-600)  // 10-minute overlap
+      } else {
+        sinceDate = Date.now.addingTimeInterval(-Self.defaultLookbackDays)
+      }
     } catch {
       throw SyncError.persistenceError(error)
     }

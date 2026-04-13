@@ -121,6 +121,12 @@ nonisolated struct EventRepo: Codable, Sendable {
 nonisolated struct EventPayload: Codable, Sendable {
   /// The commits included in a push event.
   let commits: [EventCommit]?
+  /// The number of commits in a push event (present even when `commits` is omitted).
+  let size: Int?
+  /// The HEAD commit SHA of a push event.
+  let head: String?
+  /// The ref that was pushed to (e.g., "refs/heads/main").
+  let ref: String?
   /// The action performed (e.g., "opened", "closed", "merged").
   let action: String?
   /// The pull request associated with this event.
