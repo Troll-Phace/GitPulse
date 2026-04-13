@@ -1,12 +1,22 @@
 # Project Progress
 
 ## Current Phase
-Phase: 12
-Title: Streaks View
+Phase: 13
+Title: Repositories & Languages View
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 12: Streaks View — COMPLETED 2026-04-12
+- [x] 12.1 Implemented StreaksViewModel (@Observable @MainActor): domain types (CalendarDay, StreakBar), StreakEngine integration, computed stats (currentStreak, longestStreak, activeDays, goalProgress, averageDailyCommits, trend), calendar builder (monthly grid with placeholders), streak history bar builder (normalized heights, longest/current flags), warning banner logic.
+- [x] 12.2 Implemented StreakRingView: custom StreakArc Shape conforming to Animatable, ZStack with track circle + progress arc (AngularGradient orange→red) + flame icon (3-stop gradient + glow) + hero number + subtitle. Spring animation on appear, respects reduceMotion. Accessibility label.
+- [x] 12.3 Implemented StreakCalendarView (in WeekBarChart.swift): monthly LazyVGrid with 7 columns, 5 cell states (placeholder/committed/today-at-risk/today-active/future/uncommitted), day headers, legend row. Uses gpGreen/gpRed tokens.
+- [x] 12.4 Implemented StreakHistoryTimeline: Swift Charts BarMark chart, bars colored by state (gold=longest/BEST, orange=current/NOW, variable opacity for others), Y-axis labels (0d/15d/30d/50d), dashed grid lines, animated draw-in, empty state.
+- [x] 12.5 Implemented StreaksView: ScrollView assembling warning banner (conditional, dismissable), two-column layout (hero ring card left, stat cards + calendar right), full-width history chart. @Query → ViewModel wiring matching DashboardView pattern. Empty state, entry animation.
+- [x] 12.6 Added gpRed color token (#FF453A) to Color+Extensions.swift.
+- [x] 12.7 35 StreaksViewModel tests: empty state (3), streak values (4), goal progress (3), warning banner (4), calendar grid (4), streak history bars (4), average daily commits (2), trend direction (3), date range (2), edge cases (6).
+- Verification: 238 total tests pass (0 failures), build clean
+
 ### Phase 11: Dashboard View — COMPLETED 2026-04-12
 - [x] 11.1 Implemented DashboardView layout: ScrollView with stat cards row, contribution heatmap, weekly chart + activity feed side-by-side, sync status bar. @Query data binding to DashboardViewModel. Empty state for first launch. Fade+slide entry animation with reduceMotion support.
 - [x] 11.2 Implemented ContributionHeatmap using Swift Charts RectangleMark — 16-week grid with heatmap0-4 color scale, day labels (Mon/Wed/Fri), color legend row, total contributions footer, empty state, VoiceOver accessibility label.
@@ -99,17 +109,18 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 12.1 Implement StreaksView with hero streak ring, stat cards, weekly bar chart, streak history timeline
-- [ ] 12.2 Implement StreakRingView using Canvas or custom Shape
-- [ ] 12.3 Implement WeekBarChart with BarMark
-- [ ] 12.4 Implement StreakHistoryTimeline
+- [ ] 13.1 Implement ReposView with glass search bar, language donut chart, scrollable repo card list
+- [ ] 13.2 Implement LanguageDonutChart using SectorMark
+- [ ] 13.3 Implement RepoCardView with repo name, language badge, star count, last push date, sparkline
+- [ ] 13.4 Implement RepoDetailSheet as .sheet modifier
+- [ ] 13.5 Wire ReposViewModel with search filtering and language aggregation
 
 ## Success Criteria
-- [ ] Streak ring shows correct progress ratio (current / longest)
-- [ ] Bar chart displays 7 days with today highlighted
-- [ ] Streak history shows chronological list of past streak periods
-- [ ] All stat cards show correct values
-- [ ] Liquid Glass styling applied to all cards and containers
+- [ ] Donut chart shows language distribution with correct colors
+- [ ] Search filters repo list by name
+- [ ] Repo cards display all required fields
+- [ ] Tapping a repo opens the detail sheet
+- [ ] Language percentages sum to 100%
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -172,3 +183,16 @@ Started: —
 - 2026-04-12 22:49: Session ended
 - 2026-04-12 22:58: Session ended
 - 2026-04-12 23:04: Session ended
+- 2026-04-12 23:07: Session ended
+- 2026-04-12 23:23: Session ended
+- 2026-04-12 23:23: Session ended
+- 2026-04-12 23:26: Session ended
+- 2026-04-12 23:27: Session ended
+- 2026-04-12 23:29: Session ended
+- 2026-04-12 23:30: Session ended
+- 2026-04-12 23:37: Session ended
+- 2026-04-12 23:41: Session ended
+- 2026-04-12 23:43: Session ended
+- 2026-04-12 23:45: Session ended
+- 2026-04-12 23:47: Session ended
+- 2026-04-12 23:48: Session ended

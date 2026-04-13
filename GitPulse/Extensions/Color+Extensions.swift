@@ -48,6 +48,9 @@ extension Color {
   /// Gold accent for milestones, achievements, and star counts.
   static let gpGold = Color(hex: "FFD700")
 
+  /// Red accent for destructive actions, streak-at-risk today marker, and urgent warnings.
+  static let gpRed = Color(hex: "FF453A")
+
   // MARK: Heatmap
 
   /// Heatmap level 0 — no contributions (#161B22).
