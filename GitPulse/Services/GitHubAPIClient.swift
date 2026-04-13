@@ -268,6 +268,18 @@ nonisolated protocol GitHubAPIProviding: Sendable {
   /// - Returns: `true` if the token is valid (HTTP 200), `false` if unauthorized (HTTP 401).
   func validateToken(_ token: String) async throws(GitHubError) -> Bool
 
+  /// Fetches the language breakdown for a specific repository.
+  ///
+  /// Calls the GitHub Languages API (`/repos/{owner}/{repo}/languages`) which
+  /// returns a dictionary mapping language names to byte counts. No pagination
+  /// is needed for this endpoint.
+  ///
+  /// - Parameters:
+  ///   - owner: The repository owner (user or organization).
+  ///   - repo: The repository name.
+  /// - Returns: A dictionary mapping language names to byte counts.
+  func fetchLanguages(owner: String, repo: String) async throws(GitHubError) -> [String: Int]
+
   /// The current rate limit state, if available from a previous API response.
   var currentRateLimit: RateLimitState? { get }
 }
@@ -707,5 +719,22 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
               "Unexpected HTTP status code: \(httpResponse.statusCode)."
           ]))
     }
+  }
+
+  /// Fetches the language breakdown for a specific repository.
+  ///
+  /// Calls the GitHub Languages API (`/repos/{owner}/{repo}/languages`) which
+  /// returns a dictionary mapping language names to byte counts. No pagination
+  /// is needed for this endpoint.
+  ///
+  /// - Parameters:
+  ///   - owner: The repository owner (user or organization).
+  ///   - repo: The repository name.
+  /// - Returns: A dictionary mapping language names to byte counts.
+  func fetchLanguages(owner: String, repo: String) async throws(GitHubError) -> [String: Int] {
+    let url = baseURL.appendingPathComponent("repos/\(owner)/\(repo)/languages")
+    let request = URLRequest(url: url)
+    let (data, _) = try await performRequest(request)
+    return try decode([String: Int].self, from: data)
   }
 }

@@ -286,6 +286,91 @@ actor BackgroundDataWriter {
     )
   }
 
+  // MARK: - Import Language Stats
+
+  /// A static mapping of common GitHub language names to their hex color codes.
+  ///
+  /// Colors are sourced from GitHub's linguist library. Languages not present
+  /// in this mapping default to gray (`"808080"`).
+  private static let languageColors: [String: String] = [
+    "Swift": "F05138",
+    "TypeScript": "3178C6",
+    "JavaScript": "F1E05A",
+    "Python": "3572A5",
+    "Rust": "DEA584",
+    "Go": "00ADD8",
+    "Ruby": "701516",
+    "Java": "B07219",
+    "Kotlin": "A97BFF",
+    "C": "555555",
+    "C++": "F34B7D",
+    "C#": "178600",
+    "Objective-C": "438EFF",
+    "Dart": "00B4AB",
+    "PHP": "4F5D95",
+    "Shell": "89E051",
+    "HTML": "E34C26",
+    "CSS": "563D7C",
+    "SCSS": "C6538C",
+    "Vue": "41B883",
+    "Svelte": "FF3E00",
+    "Lua": "000080",
+    "R": "198CE7",
+    "Scala": "C22D40",
+    "Elixir": "6E4A7E",
+    "Haskell": "5E5086",
+    "Zig": "EC915C",
+    "Nix": "7E7EFF",
+  ]
+
+  /// Imports language statistics for a repository, replacing any existing entries.
+  ///
+  /// Finds the `Repository` by its GitHub ID, deletes all existing `LanguageStat`
+  /// records for that repository, and creates new entries from the provided
+  /// language-to-byte-count dictionary.
+  ///
+  /// - Parameters:
+  ///   - repositoryId: The unique GitHub repository ID.
+  ///   - languages: A dictionary mapping language names to byte counts.
+  func importLanguageStats(for repositoryId: Int, languages: [String: Int]) throws {
+    let predicate = #Predicate<Repository> { $0.id == repositoryId }
+    var descriptor = FetchDescriptor<Repository>(predicate: predicate)
+    descriptor.fetchLimit = 1
+    let results = try modelContext.fetch(descriptor)
+
+    guard let repository = results.first else {
+      Self.logger.warning(
+        "Repository with id \(repositoryId) not found for language import"
+      )
+      return
+    }
+
+    // Delete existing language stats for this repository
+    for existingStat in repository.languages {
+      modelContext.delete(existingStat)
+    }
+
+    // Create new language stats
+    var newStats: [LanguageStat] = []
+    for (name, bytes) in languages {
+      let color = Self.languageColors[name] ?? "808080"
+      let stat = LanguageStat(
+        name: name,
+        bytes: bytes,
+        color: color,
+        repository: repository
+      )
+      modelContext.insert(stat)
+      newStats.append(stat)
+    }
+
+    repository.languages = newStats
+    try modelContext.save()
+    Self.logger.info(
+      "Imported \(languages.count) language stats for repository \(repositoryId)"
+    )
+  }
+
   // MARK: - Query Helpers
 
   /// Fetches all contribution dates from the SwiftData store.
@@ -520,9 +605,11 @@ actor BackgroundSyncService {
   /// 4. Fetch all repositories (paginated).
   /// 5. Fetch pull requests for all states (open, merged, closed).
   /// 6. Persist all fetched data to SwiftData.
-  /// 7. Recalculate streak statistics from all contribution dates.
-  /// 8. Update the user profile with fresh streak data.
-  /// 9. Update sync metadata with completion info.
+  /// 7. Fetch and import language stats for each repository (skipped if rate limit is low).
+  /// 8. Recalculate streak statistics from all contribution dates.
+  /// 9. Update the user profile with fresh streak data.
+  /// 10. Update sync metadata with completion info.
+  /// 11. Evaluate notification alerts.
   ///
   /// - Throws: `SyncError.apiError` for GitHub API failures,
   ///   `SyncError.persistenceError` for SwiftData write failures,
@@ -592,7 +679,44 @@ actor BackgroundSyncService {
       throw SyncError.persistenceError(error)
     }
 
-    // 7. Recalculate streaks
+    // 7. Fetch and import language stats for each repository
+    let currentRemaining = apiClient.currentRateLimit?.remaining ?? Int.max
+    let languageCallsNeeded = allRepos.count
+    let shouldFetchLanguages = currentRemaining > languageCallsNeeded
+    Self.logger.info(
+      "Language fetch: shouldFetch=\(shouldFetchLanguages), rateLimit remaining=\(currentRemaining), repos=\(allRepos.count), callsNeeded=\(languageCallsNeeded)"
+    )
+    if shouldFetchLanguages {
+      for repo in allRepos {
+        let components = repo.fullName.split(separator: "/", maxSplits: 1)
+        guard components.count == 2 else {
+          Self.logger.warning("Skipping repo with invalid fullName: \(repo.fullName)")
+          continue
+        }
+        let owner = String(components[0])
+        let repoName = String(components[1])
+
+        do {
+          let languages = try await apiClient.fetchLanguages(owner: owner, repo: repoName)
+          Self.logger.info(
+            "Fetched \(languages.count) languages for \(repo.fullName): \(Array(languages.keys).joined(separator: ", "))"
+          )
+          try await dataWriter.importLanguageStats(for: repo.id, languages: languages)
+        } catch {
+          // Non-fatal: continue syncing other repos even if one fails
+          Self.logger.warning(
+            "Failed to fetch languages for \(repo.fullName): \(error)"
+          )
+          continue
+        }
+      }
+    } else {
+      Self.logger.info(
+        "Skipping language fetch — rate limit remaining=\(currentRemaining) below threshold"
+      )
+    }
+
+    // 8. Recalculate streaks
     let allDates: [Date]
     do {
       allDates = try await dataWriter.fetchAllContributionDates()
@@ -602,7 +726,7 @@ actor BackgroundSyncService {
 
     let streakInfo = streakEngine.calculate(contributionDates: allDates)
 
-    // 8. Update user profile
+    // 9. Update user profile
     do {
       try await dataWriter.updateUserProfile(
         username: user.login,
@@ -614,7 +738,7 @@ actor BackgroundSyncService {
       throw SyncError.persistenceError(error)
     }
 
-    // 9. Update sync metadata
+    // 10. Update sync metadata
     do {
       try await dataWriter.updateSyncMetadata(
         eventsProcessed: eventsImported,
@@ -625,7 +749,7 @@ actor BackgroundSyncService {
       throw SyncError.persistenceError(error)
     }
 
-    // 10. Evaluate notification alerts (failures do not fail the sync)
+    // 11. Evaluate notification alerts (failures do not fail the sync)
     if let notificationService {
       let todayCommits = allDates.filter { Calendar.current.isDateInToday($0) }.count
       let todayPRsMerged = allPRs.filter { $0.pullRequest?.mergedAt != nil }.count

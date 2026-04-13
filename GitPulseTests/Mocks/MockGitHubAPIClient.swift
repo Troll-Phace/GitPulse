@@ -91,6 +91,23 @@ final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
   /// The token passed to the most recent `validateToken(_:)` call.
   private(set) var lastValidatedToken: String?
 
+  /// The result to return from `fetchLanguages(owner:repo:)`.
+  var fetchLanguagesResult: Result<[String: Int], GitHubError> = .success([:])
+
+  /// An ordered sequence of results for `fetchLanguages(owner:repo:)`. When non-empty,
+  /// each call removes and returns the first element. Falls back to
+  /// `fetchLanguagesResult` when the sequence is exhausted or nil.
+  var fetchLanguagesResults: [Result<[String: Int], GitHubError>]?
+
+  /// The number of times `fetchLanguages(owner:repo:)` has been called.
+  private(set) var fetchLanguagesCallCount = 0
+
+  /// The `owner` argument passed to the most recent `fetchLanguages(owner:repo:)` call.
+  private(set) var lastFetchLanguagesOwner: String?
+
+  /// The `repo` argument passed to the most recent `fetchLanguages(owner:repo:)` call.
+  private(set) var lastFetchLanguagesRepo: String?
+
   // MARK: - Helpers
 
   /// Returns the next result from an optional sequence, removing it from the array.
@@ -142,5 +159,12 @@ final class MockGitHubAPIClient: GitHubAPIProviding, @unchecked Sendable {
     validateTokenCallCount += 1
     lastValidatedToken = token
     return try nextResult(from: &validateTokenResults, fallback: validateTokenResult).get()
+  }
+
+  func fetchLanguages(owner: String, repo: String) async throws(GitHubError) -> [String: Int] {
+    fetchLanguagesCallCount += 1
+    lastFetchLanguagesOwner = owner
+    lastFetchLanguagesRepo = repo
+    return try nextResult(from: &fetchLanguagesResults, fallback: fetchLanguagesResult).get()
   }
 }
