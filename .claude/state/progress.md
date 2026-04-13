@@ -1,12 +1,24 @@
 # Project Progress
 
 ## Current Phase
-Phase: 9
-Title: Onboarding Flow
+Phase: 10
+Title: App Shell & Navigation
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 9: Onboarding Flow — COMPLETED 2026-04-12
+- [x] 9.1 Implemented OnboardingFlow with custom step-based navigation (switch on Step enum with slide transitions, not TabView) through 4 steps: Welcome, Token Setup, Repo Selection, Completion
+- [x] 9.2 Implemented TokenSetupStep: SecureField with glass styling, NSPasteboard paste button, 3 numbered instruction cards (GlassCard), inline error display (gpOrange), ProgressView spinner during validation, "Validate & Continue" CTA
+- [x] 9.3 Implemented RepoSelectionStep: scrollable LazyVStack of repo rows with checkboxes, language dots, star counts; Select All/Deselect All buttons; loading/error states with retry
+- [x] 9.4 Applied Liquid Glass styling to all onboarding steps: .glassEffect() on cards, PrimaryCTAButtonStyle (green gradient CTA), SecondaryButtonStyle, StepIndicator dots, all using DesignTokens
+- [x] 9.5 Implemented OnboardingViewModel (@Observable @MainActor): token validation with error mapping, Keychain storage, repo pagination, selection state, step navigation, completion callback
+- [x] 9.6 Implemented design system foundations: Color+Extensions (17 color tokens + hex init), DesignTokens enum (spacing, radius, sizes, animation), Font extensions (8 type scale tokens)
+- [x] 9.7 Implemented GlassCard component, PrimaryCTAButtonStyle, SecondaryButtonStyle, DestructiveButtonStyle, StepIndicator
+- [x] 9.8 Wired onboarding gate in ContentView via @AppStorage("hasCompletedOnboarding")
+- [x] 9.9 23 OnboardingViewModel tests: token validation (success, invalid, unauthorized, network, rate limit, empty, whitespace), keychain storage, profile fetch, repo fetching (pagination, errors), selection (toggle, selectAll, deselectAll), navigation, completion
+- Verification: 168 total tests pass (0 failures), build clean
+
 ### Phase 8: Notification Service — COMPLETED 2026-04-12
 - [x] 8.1 Implemented NotificationService: `GitPulseNotification`, `MilestoneType`, `NotificationError`, `NotificationIdentifier` enums; `NotificationCenterProviding` protocol + `SystemNotificationCenter` wrapper; `NotificationProviding` protocol + `NotificationService` struct
 - [x] 8.2 Implemented `evaluateAlerts(streakInfo:totalCommits:totalPRsMerged:todayCommits:todayPRs:)`: streak-at-risk (configurable hour, default 21:00), streak-broken (00:05), daily summary (22:00), milestone dedup via UserDefaults
@@ -103,3 +115,13 @@ Started: —
 - 2026-04-12 18:17: Session ended
 - 2026-04-12 18:20: Session ended
 - 2026-04-12 18:49: Session ended
+- 2026-04-12 19:04: Session ended
+- 2026-04-12 19:38: Session ended
+- 2026-04-12 19:44: Session ended
+- 2026-04-12 19:46: Session ended
+- 2026-04-12 19:48: Session ended
+- 2026-04-12 19:49: Session ended
+- 2026-04-12 19:50: Session ended
+- 2026-04-12 19:51: Session ended
+- 2026-04-12 19:53: Session ended
+- 2026-04-12 20:12: Session ended
