@@ -2,6 +2,8 @@
 
 Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria. Complete phases in order. Do not skip ahead.
 
+> **Wireframe Requirement**: ALL frontend tasks (assigned to `frontend-dev`) MUST reference the corresponding wireframe from `wireframes/` before implementation. The orchestrator MUST include the wireframe path in every frontend delegation prompt. See the wireframe map in `.claude/rules/wireframe-required.md`.
+
 ---
 
 ## Phase 1: Xcode Project Scaffold
@@ -187,6 +189,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phase 1
 
 ### Tasks
+> **Wireframe**: Read `wireframes/01-activity-dashboard.svg` for navigation structure reference before implementing.
+
 1. **[frontend-dev]** Implement the main `ContentView` using `NavigationSplitView` with a sidebar containing 5 navigation items: Dashboard, Streaks, Repos, PRs, Settings. Use SF Symbols for icons.
 2. **[frontend-dev]** Implement navigation state management with a `@Observable` `NavigationState` class tracking selected tab.
 3. **[frontend-dev]** Add keyboard shortcuts: Cmd+1–5 for tab switching, Cmd+R for manual refresh, Cmd+, for settings.
@@ -207,6 +211,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 2, 7, 10
 
 ### Tasks
+> **Wireframe**: Read `wireframes/01-activity-dashboard.svg` before implementing.
+
 1. **[frontend-dev]** Implement `DashboardView` layout: greeting line with username, streak banner card, 3 stat cards row (commits today, PRs open, this week), contribution heatmap, weekly activity chart, recent activity feed.
 2. **[frontend-dev]** Implement `ContributionHeatmap` using Swift Charts `RectangleMark` grid (ARCHITECTURE.md §4.4) with dynamic intensity buckets and hover tooltip.
 3. **[frontend-dev]** Implement `WeeklyActivityChart` using `LineMark` + `AreaMark` with gradient fill.
@@ -229,6 +235,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 6, 10
 
 ### Tasks
+> **Wireframe**: Read `wireframes/02-streak-tracking.svg` before implementing.
+
 1. **[frontend-dev]** Implement `StreaksView` with hero streak ring (progress arc toward best streak), 3 stat cards (current, longest, active days), weekly bar chart, and streak history timeline.
 2. **[frontend-dev]** Implement `StreakRingView` using `Canvas` or custom `Shape` — animated arc showing current/longest ratio.
 3. **[frontend-dev]** Implement `WeekBarChart` with `BarMark` showing per-day breakdown, today highlighted with accent color.
@@ -249,6 +257,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 2, 5, 10
 
 ### Tasks
+> **Wireframe**: Read `wireframes/03-repository-breakdown.svg` and `wireframes/04-language-analytics.svg` before implementing.
+
 1. **[frontend-dev]** Implement `ReposView` with glass search bar, language donut chart, and scrollable repo card list.
 2. **[frontend-dev]** Implement `LanguageDonutChart` using `SectorMark` with language colors from GitHub and interactive legend.
 3. **[frontend-dev]** Implement `RepoCardView` with repo name, language badge, star count, last push date, and sparkline of recent activity.
@@ -270,6 +280,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 2, 5, 10
 
 ### Tasks
+> **Wireframe**: Read `wireframes/05-pull-request-tracker.svg` before implementing.
+
 1. **[frontend-dev]** Implement `PRsView` with stats row (open/merged/closed counts), time-to-merge card, filter chips (All/Open/Merged/Closed), and scrollable PR card list.
 2. **[frontend-dev]** Implement `PRCardView` with status badge (colored per state), title, repo name, +/- line counts, file count, and time-to-merge.
 3. **[frontend-dev]** Implement `StatusBadge` reusable component: green for open, purple for merged, orange for closed.
@@ -291,6 +303,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 3, 8, 10
 
 ### Tasks
+> **Wireframe**: Read `wireframes/06-settings.svg` before implementing.
+
 1. **[frontend-dev]** Implement `SettingsView` with profile card (avatar, username, "Linked" badge), account section (token management, repo selection, refresh interval picker), notification toggles, appearance (accent color picker), about section, and disconnect button.
 2. **[frontend-dev]** Implement `ProfileCardView` with async image loading for GitHub avatar.
 3. **[frontend-dev]** Implement the disconnect flow: confirmation alert → delete Keychain token → wipe SwiftData → return to onboarding.
@@ -312,6 +326,8 @@ Each phase has 3–5 tasks, assigned subagents, and verifiable success criteria.
 **Prerequisites**: Phases 2, 7
 
 ### Tasks
+> **Wireframe**: Read `wireframes/07-widget-previews.svg` before implementing.
+
 1. **[frontend-dev]** Implement `GitPulseWidgetBundle` registering all 5 widgets.
 2. **[frontend-dev]** Implement `GitPulseTimelineProvider` reading from the shared SwiftData container (app group) per ARCHITECTURE.md §4.5.
 3. **[frontend-dev]** Implement all 5 widget views: StreakHero (small), TodayStats (small), TopLanguage (small), WeeklyGrid (medium), ActiveRepos (medium).

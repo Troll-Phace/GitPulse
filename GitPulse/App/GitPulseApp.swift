@@ -20,6 +20,9 @@ struct GitPulseApp: App {
     category: "GitPulseApp"
   )
 
+  /// The shared navigation state for sidebar tab selection and keyboard shortcuts.
+  @State private var navigationState = NavigationState()
+
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
       Contribution.self,
@@ -55,8 +58,37 @@ struct GitPulseApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()
+        .environment(navigationState)
     }
     .modelContainer(sharedModelContainer)
+    .defaultSize(width: 1100, height: 750)
+    .commands {
+      // MARK: Settings Shortcut (Cmd+,)
+      CommandGroup(replacing: .appSettings) {
+        Button("Settings...") {
+          navigationState.selectTab(.settings)
+        }
+        .keyboardShortcut(",")
+      }
+
+      // MARK: Navigation Shortcuts (Cmd+1 through Cmd+5)
+      CommandMenu("Navigation") {
+        ForEach(SidebarTab.allCases) { tab in
+          Button(tab.title) {
+            navigationState.selectTab(tab)
+          }
+          .keyboardShortcut(tab.keyboardShortcutKey)
+        }
+      }
+
+      // MARK: Refresh Shortcut (Cmd+R)
+      CommandGroup(after: .toolbar) {
+        Button("Refresh") {
+          // TODO: Wire to sync service
+        }
+        .keyboardShortcut("r")
+      }
+    }
   }
 
   /// Registers the background app refresh task handler.

@@ -66,6 +66,7 @@ Send clear prompts to subagents with full context:
 
 Context:
 - Read docs/ARCHITECTURE.md §{section}
+- **[frontend-dev only]** Read wireframes/{NN-name}.svg for the target view layout
 - {Additional context references}
 
 Requirements:
@@ -102,3 +103,4 @@ This file auto-updates via hooks. Check it at every session start.
 - Assume a subagent knows the full context
 - Create new files without checking if one already exists
 - Hardcode colors, spacing, or font sizes — always use design tokens
+- Delegate frontend work without specifying the wireframe path from `wireframes/`

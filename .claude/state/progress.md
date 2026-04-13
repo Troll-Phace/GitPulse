@@ -1,12 +1,21 @@
 # Project Progress
 
 ## Current Phase
-Phase: 10
-Title: App Shell & Navigation
+Phase: 11
+Title: Dashboard View
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 10: App Shell & Navigation — COMPLETED 2026-04-12
+- [x] 10.1 Defined `SidebarTab` enum (String, CaseIterable, Identifiable, Hashable) with 5 cases, computed title/systemImage/keyboardShortcutKey properties
+- [x] 10.2 Implemented `@Observable NavigationState` class with `selectedTab: SidebarTab?` and animated `selectTab(_:)` method
+- [x] 10.3 Rewrote ContentView with NavigationSplitView: sidebar with app branding, 4 main nav items + separated Settings, detail view switching via `switch` on selectedTab
+- [x] 10.4 Used `@Environment(NavigationState.self)` + `@Bindable` for List selection binding, `.tag(Optional(tab))` for correct optional matching
+- [x] 10.5 Added `.commands` on WindowGroup: Cmd+1–5 via CommandMenu("Navigation"), Cmd+, via CommandGroup(replacing: .appSettings), Cmd+R refresh placeholder
+- [x] 10.6 Applied `.defaultSize(width: 1100, height: 750)`, `.frame(minWidth: 900, minHeight: 600)`, `Color.gpBackground` background, `.listStyle(.sidebar)`, `.scrollContentBackground(.hidden)`
+- Verification: Build succeeds, 168 total tests pass (0 failures), no regressions
+
 ### Phase 9: Onboarding Flow — COMPLETED 2026-04-12
 - [x] 9.1 Implemented OnboardingFlow with custom step-based navigation (switch on Step enum with slide transitions, not TabView) through 4 steps: Welcome, Token Setup, Repo Selection, Completion
 - [x] 9.2 Implemented TokenSetupStep: SecureField with glass styling, NSPasteboard paste button, 3 numbered instruction cards (GlassCard), inline error display (gpOrange), ProgressView spinner during validation, "Validate & Continue" CTA
@@ -79,19 +88,19 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 9.1 Implement OnboardingFlow with TabView pagination (Welcome, Token Setup, Repo Selection, Completion)
-- [ ] 9.2 Implement TokenSetupStep with secure text field, validation, PAT instructions
-- [ ] 9.3 Implement RepoSelectionStep with repo fetch and selection
-- [ ] 9.4 Apply Liquid Glass styling to all onboarding steps
-- [ ] 9.5 Write ViewModel tests for onboarding flows
+- [ ] 11.1 Implement DashboardView layout: greeting, streak banner, stat cards, heatmap, weekly chart, activity feed
+- [ ] 11.2 Implement ContributionHeatmap using Swift Charts RectangleMark
+- [ ] 11.3 Implement WeeklyActivityChart using LineMark + AreaMark
+- [ ] 11.4 Implement reusable StatCard and GlassCard components
+- [ ] 11.5 Wire DashboardViewModel with @Query for contributions, repos, PRs
 
 ## Success Criteria
-- [ ] Onboarding shows on first launch, not on subsequent launches
-- [ ] Token validates against GitHub API before proceeding
-- [ ] Invalid token shows inline error message
-- [ ] Token is stored in Keychain after validation
-- [ ] Repo selection fetches and displays user's repos
-- [ ] All views use Liquid Glass effects
+- [ ] Dashboard displays all sections: greeting, streak banner, stats, heatmap, chart, feed
+- [ ] Heatmap renders 16 weeks of data with correct green color scale
+- [ ] Stat cards show correct values from SwiftData
+- [ ] Weekly chart displays 7 days of activity
+- [ ] All components use Liquid Glass styling
+- [ ] Dashboard works with empty data (first launch before sync)
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -125,3 +134,16 @@ Started: —
 - 2026-04-12 19:51: Session ended
 - 2026-04-12 19:53: Session ended
 - 2026-04-12 20:12: Session ended
+- 2026-04-12 20:17: Session ended
+- 2026-04-12 20:27: Session ended
+- 2026-04-12 20:44: Session ended
+- 2026-04-12 20:58: Session ended
+- 2026-04-12 21:01: Session ended
+- 2026-04-12 21:04: Session ended
+- 2026-04-12 21:07: Session ended
+- 2026-04-12 21:09: Session ended
+- 2026-04-12 21:11: Session ended
+- 2026-04-12 21:12: Session ended
+- 2026-04-12 21:13: Session ended
+- 2026-04-12 21:16: Session ended
+- 2026-04-12 21:21: Session ended

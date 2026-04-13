@@ -7,6 +7,7 @@ paths:
 
 # Design System Rules
 
+- **WIREFRAME FIRST**: Before implementing any view, read the corresponding wireframe from `wireframes/` — see .claude/rules/wireframe-required.md for the mapping
 - Use design tokens from docs/DESIGN_SYSTEM.md — NEVER hardcode colors, spacing, or font sizes
 - Use Color extension tokens (e.g., `.commitGreen`, `.linkBlue`, `.streakOrange`) — never raw hex/RGB
 - Use spacing scale tokens (e.g., `.spacingS`, `.spacingM`) — no arbitrary pixel values
