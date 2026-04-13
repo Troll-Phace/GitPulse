@@ -1,12 +1,23 @@
 # Project Progress
 
 ## Current Phase
-Phase: 11
-Title: Dashboard View
+Phase: 12
+Title: Streaks View
 Status: NOT STARTED
 Started: —
 
 ## Completed Phases
+### Phase 11: Dashboard View — COMPLETED 2026-04-12
+- [x] 11.1 Implemented DashboardView layout: ScrollView with stat cards row, contribution heatmap, weekly chart + activity feed side-by-side, sync status bar. @Query data binding to DashboardViewModel. Empty state for first launch. Fade+slide entry animation with reduceMotion support.
+- [x] 11.2 Implemented ContributionHeatmap using Swift Charts RectangleMark — 16-week grid with heatmap0-4 color scale, day labels (Mon/Wed/Fri), color legend row, total contributions footer, empty state, VoiceOver accessibility label.
+- [x] 11.3 Implemented WeeklyActivityChart using LineMark + AreaMark with green gradient, Catmull-Rom interpolation, PointMark at data points, styled axes, empty state.
+- [x] 11.4 Implemented reusable components: StatCard (90pt, glass, accent bar, value/label/trend/accessory), TrendArrow (up/down/flat with SF Symbol + color), SparklineView (60x24pt Canvas-based mini chart). GlassCard already existed from Phase 9.
+- [x] 11.5 Implemented DashboardViewModel (@Observable @MainActor): domain types (HeatmapCell, DayActivity, ActivityFeedItem), computed stats (todayCommitCount, trends, activePRCount, streaks, languages), heatmap builder (112 cells, dynamic percentile buckets), weekly activity builder (7 days), recent activity feed (last 10), sync status text.
+- [x] 11.6 Implemented StatCardsRow composing 4 stat cards: Today's Commits (sparkline + trend), Active PRs (subtitle), Current Streak (flame icon), Languages (mini bar). LanguageMiniBar helper.
+- [x] 11.7 Implemented RecentActivityFeed timeline with colored dots, dashed connectors, title/subtitle/timestamp per activity type.
+- [x] 11.8 27 DashboardViewModel tests: empty state (4), today commits (2), trends (4), active PRs (1), streak passthrough (1), languages (2), heatmap (2), weekly activity (2), recent feed (3), sync status (2), rate limit (2), sparkline (1), contributions in period (1).
+- Verification: 203 total tests pass (0 failures), build clean
+
 ### Phase 10: App Shell & Navigation — COMPLETED 2026-04-12
 - [x] 10.1 Defined `SidebarTab` enum (String, CaseIterable, Identifiable, Hashable) with 5 cases, computed title/systemImage/keyboardShortcutKey properties
 - [x] 10.2 Implemented `@Observable NavigationState` class with `selectedTab: SidebarTab?` and animated `selectTab(_:)` method
@@ -88,19 +99,17 @@ Started: —
 - [x] 1.4 GitPulseApp.swift with ModelContainer using groupContainer: .identifier("group.com.gitpulse.shared")
 
 ## Current Phase Tasks
-- [ ] 11.1 Implement DashboardView layout: greeting, streak banner, stat cards, heatmap, weekly chart, activity feed
-- [ ] 11.2 Implement ContributionHeatmap using Swift Charts RectangleMark
-- [ ] 11.3 Implement WeeklyActivityChart using LineMark + AreaMark
-- [ ] 11.4 Implement reusable StatCard and GlassCard components
-- [ ] 11.5 Wire DashboardViewModel with @Query for contributions, repos, PRs
+- [ ] 12.1 Implement StreaksView with hero streak ring, stat cards, weekly bar chart, streak history timeline
+- [ ] 12.2 Implement StreakRingView using Canvas or custom Shape
+- [ ] 12.3 Implement WeekBarChart with BarMark
+- [ ] 12.4 Implement StreakHistoryTimeline
 
 ## Success Criteria
-- [ ] Dashboard displays all sections: greeting, streak banner, stats, heatmap, chart, feed
-- [ ] Heatmap renders 16 weeks of data with correct green color scale
-- [ ] Stat cards show correct values from SwiftData
-- [ ] Weekly chart displays 7 days of activity
-- [ ] All components use Liquid Glass styling
-- [ ] Dashboard works with empty data (first launch before sync)
+- [ ] Streak ring shows correct progress ratio (current / longest)
+- [ ] Bar chart displays 7 days with today highlighted
+- [ ] Streak history shows chronological list of past streak periods
+- [ ] All stat cards show correct values
+- [ ] Liquid Glass styling applied to all cards and containers
 
 ## Session Log
 - 2026-04-12: Phase 1 completed. Build succeeds. All 4 targets configured. Directory structure matches spec.
@@ -147,3 +156,12 @@ Started: —
 - 2026-04-12 21:13: Session ended
 - 2026-04-12 21:16: Session ended
 - 2026-04-12 21:21: Session ended
+- 2026-04-12 21:23: Session ended
+- 2026-04-12 21:36: Session ended
+- 2026-04-12 21:38: Session ended
+- 2026-04-12 21:53: Session ended
+- 2026-04-12 21:55: Session ended
+- 2026-04-12 22:06: Session ended
+- 2026-04-12 22:14: Session ended
+- 2026-04-12 22:20: Session ended
+- 2026-04-12 22:24: Session ended

@@ -17,8 +17,8 @@ struct OnboardingFlow: View {
   /// Creates an onboarding flow that calls `onComplete` when the user finishes setup.
   ///
   /// - Parameter onComplete: A closure invoked when onboarding is fully completed,
-  ///   typically used to flip an `@AppStorage` flag.
-  init(onComplete: @escaping () -> Void) {
+  ///   receiving the validated GitHub username so it can be persisted.
+  init(onComplete: @escaping (String) -> Void) {
     let vm = OnboardingViewModel()
     vm.onComplete = onComplete
     _viewModel = State(initialValue: vm)
@@ -88,6 +88,6 @@ struct OnboardingFlow: View {
 // MARK: - Previews
 
 #Preview("OnboardingFlow") {
-  OnboardingFlow(onComplete: {})
+  OnboardingFlow(onComplete: { _ in })
     .frame(width: 700, height: 600)
 }

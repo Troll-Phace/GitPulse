@@ -138,9 +138,9 @@ nonisolated struct EventCommit: Codable, Sendable {
 /// A pull request reference within an event payload.
 nonisolated struct EventPR: Codable, Sendable {
   /// The pull request number within its repository.
-  let number: Int
+  let number: Int?
   /// The pull request title.
-  let title: String
+  let title: String?
   /// The number of lines added, if available.
   let additions: Int?
   /// The number of lines deleted, if available.
@@ -490,6 +490,9 @@ nonisolated final class GitHubAPIClient: GitHubAPIProviding, @unchecked Sendable
     do {
       return try Self.decoder.decode(type, from: data)
     } catch {
+      let logger = Logger(subsystem: "com.gitpulse", category: "GitHubAPIClient")
+      logger.error(
+        "Decoding \(String(describing: T.self)) failed: \(String(describing: error))")
       throw .decodingFailed(underlying: error)
     }
   }

@@ -72,8 +72,11 @@ final class OnboardingViewModel {
   /// The API client created during token validation, reused for repository fetching.
   private var apiClient: (any GitHubAPIProviding)?
 
-  /// A closure called when onboarding completes, typically used to flip an `@AppStorage` flag.
-  var onComplete: (() -> Void)?
+  /// A closure called when onboarding completes, passing the validated GitHub username.
+  ///
+  /// The caller typically uses this to persist the username in `@AppStorage` and
+  /// flip the `hasCompletedOnboarding` flag.
+  var onComplete: ((String) -> Void)?
 
   // MARK: - Initialization
 
@@ -223,12 +226,13 @@ final class OnboardingViewModel {
 
   // MARK: - Completion
 
-  /// Completes the onboarding flow by invoking the `onComplete` closure.
+  /// Completes the onboarding flow by invoking the `onComplete` closure with the username.
   ///
-  /// The closure is typically used to flip an `@AppStorage` flag so the onboarding
-  /// screen is not shown again on subsequent launches.
+  /// The closure receives the validated GitHub username so the caller can persist it
+  /// alongside flipping the `@AppStorage` onboarding flag.
   func completeOnboarding() {
-    onComplete?()
+    let username = validatedUser?.login ?? ""
+    onComplete?(username)
   }
 
   // MARK: - Private Helpers

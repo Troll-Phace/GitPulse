@@ -23,6 +23,12 @@ struct GitPulseApp: App {
   /// The shared navigation state for sidebar tab selection and keyboard shortcuts.
   @State private var navigationState = NavigationState()
 
+  /// The sync coordinator for triggering data syncs from commands and views.
+  @State private var syncCoordinator = SyncCoordinator()
+
+  /// The persisted GitHub username, used for Keychain lookups during sync.
+  @AppStorage("githubUsername") private var githubUsername: String = ""
+
   var sharedModelContainer: ModelContainer = {
     let schema = Schema([
       Contribution.self,
@@ -59,6 +65,7 @@ struct GitPulseApp: App {
     WindowGroup {
       ContentView()
         .environment(navigationState)
+        .environment(syncCoordinator)
     }
     .modelContainer(sharedModelContainer)
     .defaultSize(width: 1100, height: 750)
@@ -84,9 +91,15 @@ struct GitPulseApp: App {
       // MARK: Refresh Shortcut (Cmd+R)
       CommandGroup(after: .toolbar) {
         Button("Refresh") {
-          // TODO: Wire to sync service
+          Task {
+            await syncCoordinator.triggerSync(
+              username: githubUsername,
+              modelContainer: sharedModelContainer
+            )
+          }
         }
         .keyboardShortcut("r")
+        .disabled(syncCoordinator.isSyncing)
       }
     }
   }

@@ -4,6 +4,7 @@
 //  Created by Anthony Grimaldi on 4/12/26.
 //
 
+import SwiftData
 import SwiftUI
 
 /// The root content view that gates the main app behind onboarding.
@@ -22,13 +23,21 @@ struct ContentView: View {
   /// The shared navigation state injected from the app scene.
   @Environment(NavigationState.self) private var navigationState
 
+  /// The sync coordinator for triggering data syncs.
+  @Environment(SyncCoordinator.self) private var syncCoordinator
+
+  /// The model container for SwiftData persistence.
+  @Environment(\.modelContext) private var modelContext
+
   /// Local selection state bound to the TabView.
   @State private var selectedTab: SidebarTab = .dashboard
 
   var body: some View {
     if !hasCompletedOnboarding {
-      OnboardingFlow {
+      OnboardingFlow { username in
+        githubUsername = username
         hasCompletedOnboarding = true
+        triggerInitialSync(username: username)
       }
       .frame(
         minWidth: 600, idealWidth: 800,
@@ -77,6 +86,22 @@ struct ContentView: View {
           selectedTab = newValue
         }
       }
+    }
+  }
+
+  // MARK: - Private Helpers
+
+  /// Triggers the initial data sync after onboarding completes.
+  ///
+  /// Runs the sync asynchronously so it does not block the UI transition
+  /// from the onboarding flow to the main app shell.
+  private func triggerInitialSync(username: String) {
+    let container = modelContext.container
+    Task {
+      await syncCoordinator.triggerSync(
+        username: username,
+        modelContainer: container
+      )
     }
   }
 }
@@ -187,6 +212,7 @@ private struct SidebarFooterView: View {
 #Preview("Authenticated") {
   ContentView()
     .environment(NavigationState())
+    .environment(SyncCoordinator())
 }
 
 #Preview("Sidebar Header") {

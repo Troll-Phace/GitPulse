@@ -443,15 +443,15 @@ struct OnboardingViewModelTests {
 
   // MARK: - Completion
 
-  @Test("completeOnboarding invokes the onComplete closure")
+  @Test("completeOnboarding invokes the onComplete closure with username")
   func test_completeOnboarding_callsOnComplete() {
     let (vm, _, _) = makeViewModel()
 
-    var closureCalled = false
-    vm.onComplete = { closureCalled = true }
+    var receivedUsername: String?
+    vm.onComplete = { username in receivedUsername = username }
 
     vm.completeOnboarding()
 
-    #expect(closureCalled == true)
+    #expect(receivedUsername != nil)
   }
 }
