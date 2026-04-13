@@ -136,29 +136,50 @@ actor BackgroundDataWriter {
 
   /// Imports GitHub repositories as `Repository` records into SwiftData.
   ///
-  /// Existing records with the same `id` are upserted via SwiftData's
-  /// `@Attribute(.unique)` behavior. Language stats are left empty; they
-  /// are fetched separately in future phases.
+  /// For existing repositories (matched by unique `id`), updates all fields
+  /// in place while preserving the `languages` relationship to avoid
+  /// invalidating `LanguageStat` references held by views.
+  /// New repositories are inserted with an empty languages array.
   ///
   /// - Parameter repos: The GitHub repositories to import.
   func importRepositories(_ repos: [GitHubRepo]) throws {
     for repo in repos {
-      let repository = Repository(
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.fullName,
-        descriptionText: repo.description,
-        language: repo.language,
-        starCount: repo.stargazersCount,
-        forkCount: repo.forksCount,
-        isPrivate: repo.isPrivate,
-        lastPushDate: repo.pushedAt,
-        createdAt: repo.createdAt,
-        updatedAt: repo.updatedAt,
-        languages: []
-      )
+      // Look for existing repository to update in place
+      let repoId = repo.id
+      let predicate = #Predicate<Repository> { $0.id == repoId }
+      var descriptor = FetchDescriptor<Repository>(predicate: predicate)
+      descriptor.fetchLimit = 1
 
-      modelContext.insert(repository)
+      if let existing = try modelContext.fetch(descriptor).first {
+        // Update fields in place — preserve languages relationship
+        existing.name = repo.name
+        existing.fullName = repo.fullName
+        existing.descriptionText = repo.description
+        existing.language = repo.language
+        existing.starCount = repo.stargazersCount
+        existing.forkCount = repo.forksCount
+        existing.isPrivate = repo.isPrivate
+        existing.lastPushDate = repo.pushedAt
+        existing.createdAt = repo.createdAt
+        existing.updatedAt = repo.updatedAt
+      } else {
+        // New repository — insert fresh
+        let repository = Repository(
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.fullName,
+          descriptionText: repo.description,
+          language: repo.language,
+          starCount: repo.stargazersCount,
+          forkCount: repo.forksCount,
+          isPrivate: repo.isPrivate,
+          lastPushDate: repo.pushedAt,
+          createdAt: repo.createdAt,
+          updatedAt: repo.updatedAt,
+          languages: []
+        )
+        modelContext.insert(repository)
+      }
     }
 
     try modelContext.save()
@@ -323,11 +344,11 @@ actor BackgroundDataWriter {
     "Nix": "7E7EFF",
   ]
 
-  /// Imports language statistics for a repository, replacing any existing entries.
+  /// Imports language statistics for a repository, updating existing entries in place.
   ///
-  /// Finds the `Repository` by its GitHub ID, deletes all existing `LanguageStat`
-  /// records for that repository, and creates new entries from the provided
-  /// language-to-byte-count dictionary.
+  /// Finds the `Repository` by its GitHub ID, then updates existing `LanguageStat`
+  /// records, creates new ones for new languages, and removes stale ones.
+  /// Updates in place to avoid invalidating SwiftData references held by views.
   ///
   /// - Parameters:
   ///   - repositoryId: The unique GitHub repository ID.
@@ -345,26 +366,40 @@ actor BackgroundDataWriter {
       return
     }
 
-    // Delete existing language stats for this repository
-    for existingStat in repository.languages {
-      modelContext.delete(existingStat)
+    // Build a lookup of existing stats by language name
+    var existingByName: [String: LanguageStat] = [:]
+    for stat in repository.languages {
+      existingByName[stat.name] = stat
     }
 
-    // Create new language stats
-    var newStats: [LanguageStat] = []
+    // Update or create language stats
+    var updatedStats: [LanguageStat] = []
     for (name, bytes) in languages {
       let color = Self.languageColors[name] ?? "808080"
-      let stat = LanguageStat(
-        name: name,
-        bytes: bytes,
-        color: color,
-        repository: repository
-      )
-      modelContext.insert(stat)
-      newStats.append(stat)
+      if let existing = existingByName.removeValue(forKey: name) {
+        // Update in place
+        existing.bytes = bytes
+        existing.color = color
+        updatedStats.append(existing)
+      } else {
+        // New language — create
+        let stat = LanguageStat(
+          name: name,
+          bytes: bytes,
+          color: color,
+          repository: repository
+        )
+        modelContext.insert(stat)
+        updatedStats.append(stat)
+      }
     }
 
-    repository.languages = newStats
+    // Remove stale languages no longer present
+    for (_, staleStat) in existingByName {
+      modelContext.delete(staleStat)
+    }
+
+    repository.languages = updatedStats
     try modelContext.save()
     Self.logger.info(
       "Imported \(languages.count) language stats for repository \(repositoryId)"
