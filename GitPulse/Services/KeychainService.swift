@@ -86,7 +86,6 @@ struct KeychainService: KeychainProviding {
       kSecAttrAccount as String: account,
       kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
       kSecAttrSynchronizable as String: false,
-      kSecUseDataProtectionKeychain as String: true,
     ]
   }
 
